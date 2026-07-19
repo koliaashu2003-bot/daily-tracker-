@@ -180,9 +180,14 @@ document.getElementById('tabs').addEventListener('click',function(e){
 });
 
 // TODAY
+var lastRenderedDate = '';
+
 function renderToday(){
   var ds=fmt(curDate),isTd=ds===today(),isFut=curDate>new Date();
-  pendingData=load(ds);
+  if(ds !== lastRenderedDate){
+    pendingData=load(ds);
+    lastRenderedDate=ds;
+  }
   var dlbl=curDate.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
   var dot=isTd?' <span style="display:inline-block;width:7px;height:7px;background:#34C759;border-radius:50%;vertical-align:middle"></span>':'';
   var sub=isTd?'Today':String(curDate.getFullYear());
@@ -229,8 +234,8 @@ function buildTask(t,obj,fut){
 }
 
 function bindToday(ds,fut){
-  document.getElementById('dprev').onclick=function(){curDate.setDate(curDate.getDate()-1);renderToday();};
-  document.getElementById('dnext').onclick=function(){curDate.setDate(curDate.getDate()+1);renderToday();};
+  document.getElementById('dprev').onclick=function(){curDate.setDate(curDate.getDate()-1);lastRenderedDate='';renderToday();};
+  document.getElementById('dnext').onclick=function(){curDate.setDate(curDate.getDate()+1);lastRenderedDate='';renderToday();};
 
   var rows=document.querySelectorAll('[data-tid]');
   for(var i=0;i<rows.length;i++){
@@ -275,7 +280,7 @@ function bindToday(ds,fut){
       save(ds,pendingData);
       calcStreak();
       var c=cntDone(pendingData);
-      sb.textContent='&#10003; Saved! '+c.done+'/'+c.total+' tasks done';
+      sb.innerHTML='&#10003; Saved! '+c.done+'/'+c.total+' tasks done';
       sb.classList.add('saved');
       showToast('&#9989; Progress saved for '+curDate.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));
       setTimeout(function(){sb.innerHTML='&#10003; Submit Today\'s Progress';sb.classList.remove('saved');},3000);
