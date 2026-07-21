@@ -144,12 +144,41 @@ function ts(m){var t=document.getElementById("toast");t.innerHTML=m;t.classList.
 function getTasksForDate(ds){
   if(!UD||!UD.tasks) return [];
   var dt=mk(ds),dow=dt.getDay(),dom=dt.getDate();
-  return UD.tasks.filter(function(t){
-    if(t.freq==="daily") return true;
-    if(t.freq==="weekly") return dow===1; // Monday
-    if(t.freq==="monthly") return dom===1; // 1st of month
-    return true;
-  });
+  var result=[];
+  for(var i=0;i<UD.tasks.length;i++){
+    var t=UD.tasks[i];
+    if(t.freq==="daily"){result.push(t);continue;}
+    if(t.freq==="weekly"&&dow===1){result.push(t);continue;}
+    if(t.freq==="monthly"&&dom===1){result.push(t);continue;}
+    if(t.freq==="custom"&&t.startDate&&t.customDays){
+      var start=mk(t.startDate);
+      var diff=Math.round((dt-start)/864e5);
+      if(diff>=0&&diff%t.customDays===0){result.push(t);continue;}
+    }
+    if(t.freq==="project"&&t.startDate&&t.deadline){
+      var pStart=mk(t.startDate);
+      var pEnd=mk(t.deadline);
+      if(dt>=pStart&&dt<=pEnd){
+        var dayNum=getProjDayNum(t,ds);
+        if(dayNum>0&&dayNum<=t.totalDays){result.push(t);continue;}
+      }
+    }
+  }
+  return result;
+}
+
+function getProjDayNum(t,ds){
+  // Count working days from start to ds (inclusive)
+  var start=mk(t.startDate);
+  var target=mk(ds);
+  var count=0;
+  var d=new Date(start);
+  while(d<=target){
+    count++;
+    if(fm(d)===ds) return count<=t.totalDays?count:0;
+    d.setDate(d.getDate()+1);
+  }
+  return 0;
 }
 function cntDone(obj,ds){
   var tasks=getTasksForDate(ds),done=0,total=tasks.length;
@@ -209,22 +238,44 @@ function showObStep2(){
   var html='<div class="onboard"><div class="ob-step">Step 2 of 2</div><div class="ob-title">Create Your Tasks</div><div class="ob-sub">Add the habits and tasks you want to track. You can always edit later.</div>';
 
   // Add task form
-  html+='<div class="card"><label style="margin-top:0">Task Name</label>';
+  html+='<div class="card"><div class="card-t">&#10010; Add a Task or Project</div>';
+  html+='<div class="freq-pills" style="margin-bottom:12px"><span class="freq-pill on" data-m="task">&#9998; Task</span><span class="freq-pill" data-m="project">&#128197; Project</span></div>';
+
+  // Task form
+  html+='<div id="taskForm"><label style="margin-top:0">Task Name</label>';
   html+='<input id="atName" placeholder="e.g. Workout, Read 30 min, Cold outreach...">';
   html+='<label>Description (optional)</label>';
   html+='<input id="atDesc" placeholder="Brief description">';
   html+='<label>Frequency</label>';
-  html+='<div class="freq-pills"><span class="freq-pill on" data-f="daily">Daily</span><span class="freq-pill" data-f="weekly">Weekly</span><span class="freq-pill" data-f="monthly">Monthly</span></div>';
+  html+='<div class="freq-pills"><span class="freq-pill on" data-f="daily">Daily</span><span class="freq-pill" data-f="weekly">Weekly (Mon)</span><span class="freq-pill" data-f="monthly">Monthly (1st)</span><span class="freq-pill" data-f="custom">Every X days</span></div>';
+  html+='<div id="customDaysWrap" style="display:none;margin-top:8px"><label>Repeat every how many days?</label><input id="atCustomDays" type="number" min="2" max="90" placeholder="e.g. 3 = every 3rd day" value="3"></div>';
   html+='<label>Track a number? (optional)</label>';
   html+='<input id="atNum" placeholder="e.g. Responses received, Pages read...">';
   html+='<div style="margin-top:12px"><button class="btn btn-purple btn-small" id="atAdd">+ Add Task</button></div></div>';
 
+  // Project form
+  html+='<div id="projForm" style="display:none"><label style="margin-top:0">Project Name</label>';
+  html+='<input id="apName" placeholder="e.g. Pitch Deck for Startup X, Revit Model...">';
+  html+='<label>Description (optional)</label>';
+  html+='<input id="apDesc" placeholder="What is this project about?">';
+  html+='<label>Total Hours Needed</label>';
+  html+='<input id="apHours" type="number" min="1" max="500" placeholder="e.g. 20">';
+  html+='<label>Deadline</label>';
+  html+='<input id="apDeadline" type="date" min="'+fm(new Date())+'">';
+  html+='<div style="background:#f5f5f7;border-radius:10px;padding:10px;margin-top:8px;font-size:12px;color:#86868b" id="projCalc"></div>';
+  html+='<div style="margin-top:12px"><button class="btn btn-green btn-small" id="apAdd">+ Add Project</button></div></div>';
+
+  html+='</div>';
+
   // Task list
   html+='<div class="card"><div class="card-t">Your Tasks ('+obTasks.length+')</div><div id="obList">';
-  if(obTasks.length===0) html+='<div class="empty">No tasks yet. Add at least 1 task above.</div>';
+  if(obTasks.length===0) html+='<div class="empty">No tasks yet. Add at least 1 above.</div>';
   for(var i=0;i<obTasks.length;i++){
     var t=obTasks[i];
-    html+='<div class="task-preview"><div class="name">'+es(t.name)+'</div><div class="freq">'+t.freq+'</div><span class="del" data-ri="'+i+'">&#215;</span></div>';
+    var fLabel=t.freq;
+    if(t.freq==="custom") fLabel="Every "+t.customDays+"d";
+    if(t.freq==="project") fLabel="Project "+t.totalDays+"d";
+    html+='<div class="task-preview"><div class="name">'+es(t.name)+'</div><div class="freq">'+fLabel+'</div><span class="del" data-ri="'+i+'">&#215;</span></div>';
   }
   html+='</div></div>';
 
@@ -233,13 +284,42 @@ function showObStep2(){
   html+='</div>';
   root.innerHTML=html;
 
+  // Mode toggle (Task vs Project)
+  var mode="task";
+  var modePills=document.querySelectorAll("[data-m]");
+  for(var i=0;i<modePills.length;i++) modePills[i].onclick=function(){
+    mode=this.dataset.m;
+    for(var j=0;j<modePills.length;j++) modePills[j].className="freq-pill"+(modePills[j].dataset.m===mode?" on":"");
+    document.getElementById("taskForm").style.display=mode==="task"?"":"none";
+    document.getElementById("projForm").style.display=mode==="project"?"":"none";
+  };
+
   // Freq pills
   var selFreq="daily";
-  var pills=document.querySelectorAll(".freq-pill");
+  var pills=document.querySelectorAll("[data-f]");
   for(var i=0;i<pills.length;i++) pills[i].onclick=function(){
     selFreq=this.dataset.f;
     for(var j=0;j<pills.length;j++) pills[j].className="freq-pill"+(pills[j].dataset.f===selFreq?" on":"");
+    var cw=document.getElementById("customDaysWrap");
+    if(cw) cw.style.display=selFreq==="custom"?"":"none";
   };
+
+  // Project calculator
+  var apH=document.getElementById("apHours");
+  var apD=document.getElementById("apDeadline");
+  function calcProj(){
+    var hrs=parseInt(apH?apH.value:0)||0;
+    var dl=apD?apD.value:"";
+    var el=document.getElementById("projCalc");
+    if(!el||!hrs||!dl) {if(el) el.textContent="Enter hours and deadline to see plan.";return;}
+    var daysNeeded=Math.ceil(hrs/2);
+    var daysAvail=Math.ceil((mk(dl)-new Date())/864e5);
+    if(daysAvail<=0){el.innerHTML="&#9888; Deadline is in the past!";return;}
+    if(daysNeeded>daysAvail){el.innerHTML="&#9888; Not enough time! Need <b>"+daysNeeded+" days</b> but only <b>"+daysAvail+" days</b> left. Increase deadline or reduce hours.";}
+    else{el.innerHTML="&#9989; <b>"+hrs+" hours</b> &#247; 2 hrs/day = <b>"+daysNeeded+" working days</b>. You have "+daysAvail+" days until deadline. Shows as <b>'Project &#8212; Day X/"+daysNeeded+"'</b> in your daily tasks.";}
+  }
+  if(apH) apH.oninput=calcProj;
+  if(apD) apD.oninput=calcProj;
 
   // Add task
   document.getElementById("atAdd").onclick=function(){
@@ -247,7 +327,31 @@ function showObStep2(){
     if(!name){ts("Enter task name");return;}
     var desc=document.getElementById("atDesc").value.trim();
     var numLabel=document.getElementById("atNum").value.trim();
-    obTasks.push({id:"t_"+Date.now()+"_"+obTasks.length,name:name,desc:desc||"",freq:selFreq,numId:numLabel?("n_"+Date.now()):"",numLabel:numLabel});
+    var taskObj={id:"t_"+Date.now()+"_"+obTasks.length,name:name,desc:desc||"",freq:selFreq,numId:numLabel?("n_"+Date.now()):"",numLabel:numLabel,startDate:td()};
+    if(selFreq==="custom"){
+      var cd=parseInt(document.getElementById("atCustomDays").value)||3;
+      if(cd<2) cd=2;
+      taskObj.customDays=cd;
+    }
+    obTasks.push(taskObj);
+    showObStep2();
+  };
+
+  // Add project
+  var apAddBtn=document.getElementById("apAdd");
+  if(apAddBtn) apAddBtn.onclick=function(){
+    var name=(document.getElementById("apName").value||"").trim();
+    if(!name){ts("Enter project name");return;}
+    var desc=(document.getElementById("apDesc").value||"").trim();
+    var hrs=parseInt(document.getElementById("apHours").value)||0;
+    var dl=document.getElementById("apDeadline").value;
+    if(!hrs||hrs<1){ts("Enter total hours");return;}
+    if(!dl){ts("Set a deadline");return;}
+    var daysNeeded=Math.ceil(hrs/2);
+    var daysAvail=Math.ceil((mk(dl)-new Date())/864e5);
+    if(daysAvail<=0){ts("Deadline is in the past");return;}
+    if(daysNeeded>daysAvail){ts("Not enough time! Need "+daysNeeded+" days, only "+daysAvail+" available. Increase deadline or reduce hours.");return;}
+    obTasks.push({id:"p_"+Date.now(),name:name,desc:desc||"",freq:"project",totalHours:hrs,hoursPerDay:2,deadline:dl,startDate:td(),totalDays:daysNeeded,numId:"",numLabel:""});
     showObStep2();
   };
 
@@ -319,7 +423,7 @@ function bT(ds,it,fu,past){
     h+='<div class="card"><div class="empty">No tasks scheduled for this day.</div></div>';
   } else {
     h+='<div class="card"><div class="card-t">&#128203; Tasks for Today ('+tasks.length+')</div>';
-    for(var i=0;i<tasks.length;i++) h+=buildRow(tasks[i],PD,locked||fu);
+    for(var i=0;i<tasks.length;i++) h+=buildRow(tasks[i],PD,locked||fu,ds);
     h+='</div>';
   }
 
@@ -339,12 +443,21 @@ function bT(ds,it,fu,past){
   bindT(ds,locked||fu,it);
 }
 
-function buildRow(t,obj,dis){
+function buildRow(t,obj,dis,ds){
   var on=!!obj[t.id];
+  var freqLabel=t.freq;
+  if(t.freq==="custom") freqLabel="Every "+t.customDays+"d";
+  var nameExtra="";
+  if(t.freq==="project"){
+    var dn=getProjDayNum(t,ds);
+    freqLabel="project";
+    nameExtra=" &#8212; Day "+dn+"/"+t.totalDays;
+  }
   var h='<div class="rw'+(on?" dn3":"")+'" data-tid="'+t.id+'">';
   h+='<div class="ck'+(on?" on":"")+'"></div>';
-  h+='<div style="flex:1"><div class="tn">'+es(t.name)+'<span class="freq-tag">'+t.freq+'</span></div>';
+  h+='<div style="flex:1"><div class="tn">'+es(t.name)+nameExtra+'<span class="freq-tag">'+freqLabel+'</span></div>';
   if(t.desc) h+='<div class="td2">'+es(t.desc)+'</div>';
+  if(t.freq==="project") h+='<div class="td2" style="color:#6C5CE7">&#9201; 2 hrs today &#183; Deadline: '+t.deadline+'</div>';
   if(t.numId){var v=obj[t.numId]||0;h+='<div class="nb" data-stop="1"><span>'+es(t.numLabel)+'</span><input type="number" min="0" value="'+v+'" data-nid="'+t.numId+'"'+(dis?" disabled":"")+'></div>';}
   h+='</div></div>';
   return h;
