@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6C5CE7">
+<title>1% Daily Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#f5f5f7;color:#1d1d1f;min-height:100vh}
+#root{max-width:500px;margin:0 auto}
+
+/* Common */
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card-t{font-size:10px;color:#86868b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:700}
+.btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;color:#fff}
+.btn:active{opacity:.85}
+.btn:disabled{opacity:.5}
+.btn-purple{background:linear-gradient(135deg,#6C5CE7,#a78bfa)}
+.btn-green{background:linear-gradient(135deg,#34C759,#30B350)}
+.btn-small{padding:10px 16px;font-size:13px;width:auto;border-radius:10px}
+input,select,textarea{width:100%;font-size:14px;padding:11px 14px;border:1.5px solid #d1d1d6;border-radius:10px;background:#f5f5f7;color:#1d1d1f;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:#6C5CE7;outline:none;background:#fff}
+textarea{resize:vertical;min-height:50px}
+input::placeholder,textarea::placeholder{color:#aeaeb2}
+label{font-size:12px;color:#86868b;font-weight:600;display:block;margin-bottom:4px;margin-top:12px}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:100;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.empty{color:#aeaeb2;font-size:12px;text-align:center;padding:14px}
+.quote{text-align:center;font-size:12px;color:#aeaeb2;font-style:italic;margin:16px 16px 20px;line-height:1.5}
+
+/* Login */
+.login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;text-align:center}
+.login h1{font-size:28px;color:#6C5CE7;margin-top:8px}
+.login p{font-size:14px;color:#86868b;margin:8px 0 30px;line-height:1.5}
+.g-btn{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #d1d1d6;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06);color:#1d1d1f}
+.g-btn img{width:20px;height:20px}
+.feat{font-size:13px;color:#86868b;padding:6px 0;text-align:left}
+
+/* Onboarding */
+.onboard{padding:20px 16px;min-height:100vh}
+.ob-title{font-size:22px;font-weight:800;color:#6C5CE7;margin-bottom:4px}
+.ob-sub{font-size:13px;color:#86868b;margin-bottom:20px}
+.ob-step{font-size:11px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.freq-pills{display:flex;gap:8px;margin-top:4px}
+.freq-pill{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #d1d1d6;color:#86868b;background:#f5f5f7}
+.freq-pill.on{background:#6C5CE7;color:#fff;border-color:#6C5CE7}
+.task-preview{display:flex;align-items:center;gap:10px;padding:10px;background:#f5f5f7;border-radius:10px;margin-top:8px}
+.task-preview .name{flex:1;font-size:13px;font-weight:600}
+.task-preview .freq{font-size:10px;color:#fff;background:#6C5CE7;padding:2px 8px;border-radius:10px}
+.task-preview .del{color:#FF3B30;font-size:18px;cursor:pointer;padding:0 6px}
+
+/* App Shell */
+.app{padding:12px 12px 120px}
+.hdr{background:linear-gradient(135deg,#6C5CE7,#a78bfa);border-radius:16px;padding:16px 20px;margin-bottom:14px;color:#fff;display:flex;align-items:center;gap:14px}
+.av{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.3);object-fit:cover}
+.hdr .info{flex:1}
+.hdr .lbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;opacity:.7}
+.hdr .nm{font-size:18px;font-weight:800;margin-top:1px}
+.hdr .stk{font-size:12px;opacity:.85;margin-top:3px}
+.so{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer}
+.tabs{display:flex;background:#fff;border-radius:12px;padding:3px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tb{flex:1;text-align:center;padding:9px 4px;font-size:11px;font-weight:600;color:#86868b;border-radius:10px;cursor:pointer;border:none;background:none}
+.tb.on{background:#6C5CE7;color:#fff;box-shadow:0 2px 8px rgba(108,92,231,.3)}
+.dn{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:12px;padding:10px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.dn button{background:none;border:none;color:#6C5CE7;font-size:24px;cursor:pointer;padding:4px 12px;font-weight:700}
+.locked-msg{background:#FFF3CD;color:#856404;font-size:12px;padding:10px 14px;border-radius:10px;text-align:center;margin-bottom:12px;font-weight:600}
+
+/* Tasks */
+.rw{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #f0f0f2;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rw:last-child{border-bottom:none}
+.ck{width:24px;height:24px;border:2.5px solid #d1d1d6;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;margin-top:1px;transition:.15s}
+.ck.on{background:#34C759;border-color:#34C759}
+.tn{font-size:14px;font-weight:600;color:#1d1d1f}
+.td2{font-size:11px;color:#86868b;margin-top:2px}
+.rw.dn3 .tn{opacity:.45;text-decoration:line-through}
+.rw.dn3 .td2{opacity:.3}
+.nb{display:flex;align-items:center;gap:8px;margin-top:6px;padding:6px 10px;background:#f5f5f7;border-radius:8px}
+.nb span{font-size:11px;color:#86868b;flex:1}
+.nb input{width:54px;background:#fff;border:1.5px solid #d1d1d6;border-radius:6px;color:#1d1d1f;font-size:14px;padding:5px 8px;text-align:center}
+.nb input:focus{border-color:#6C5CE7;outline:none}
+.freq-tag{font-size:9px;color:#6C5CE7;background:#EDE7F6;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:6px;text-transform:uppercase}
+
+/* Submit */
+.sub-wrap{position:sticky;bottom:12px;z-index:10}
+.sub-btn{width:100%;background:linear-gradient(135deg,#34C759,#30B350);color:#fff;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 4px 15px rgba(52,199,89,.35)}
+.sub-btn:active{transform:scale(.97)}
+.sub-btn.saved{background:linear-gradient(135deg,#6C5CE7,#a78bfa)}
+.sub-btn:disabled{opacity:.6}
+
+/* Calendar */
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.cg .ch{font-size:10px;color:#86868b;text-align:center;padding:4px;font-weight:600}
+.cy{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:#f5f5f7;color:#aeaeb2}
+.cy.pf{background:#34C759;color:#fff}
+.cy.pt{background:#E8F5E9;color:#2E7D32}
+.cy.now{outline:2.5px solid #6C5CE7;outline-offset:-1px}
+.mn{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mn button{background:none;border:none;color:#6C5CE7;font-size:20px;cursor:pointer;padding:4px 10px;font-weight:700}
+
+/* Rewards */
+.rew-banner{background:linear-gradient(135deg,#FFD700,#FFA500);border-radius:14px;padding:20px;margin-bottom:12px;text-align:center;color:#1d1d1f;box-shadow:0 2px 12px rgba(255,165,0,.25)}
+.rew-code{background:#fff;border-radius:8px;padding:10px;margin-top:10px;font-size:20px;font-weight:800;color:#6C5CE7;letter-spacing:3px;font-family:monospace}
+.pbar{background:#f5f5f7;border-radius:10px;height:12px;margin-top:14px;overflow:hidden}
+.pfill{background:linear-gradient(90deg,#6C5CE7,#a78bfa);height:100%;border-radius:10px}
+.ms{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f2}
+.ms:last-child{border-bottom:none}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.badge{font-size:10px;background:#f0f0f2;border-radius:12px;padding:4px 10px;color:#86868b;font-weight:600}
+.badge.earned{background:#E8F5E9;color:#2E7D32}
+.badge.gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#1d1d1f}
+
+/* Report */
+.sb{background:#f5f5f7;border-radius:10px;padding:14px;text-align:center}
+.sb .big{font-size:26px;font-weight:800}
+.sb .sm{font-size:10px;color:#86868b;margin-top:2px}
+</style>
+</head>
+<body>
+<div id="root"><div style="display:flex;align-items:center;justify-content:center;min-height:100vh;color:#6C5CE7;font-size:16px">Loading...</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+firebase.initializeApp({apiKey:"AIzaSyBE0DvWELiDVg4g92BtO1lHhOS14QAXchc",authDomain:"daily-tracker-6433f.firebaseapp.com",projectId:"daily-tracker-6433f",storageBucket:"daily-tracker-6433f.firebasestorage.app",messagingSenderId:"258253046050",appId:"1:258253046050:web:db6a2e839e3f83f508e57b"});
+var au=firebase.auth(),db=firebase.firestore();
+var ADMIN_EMAIL="koliaashu2003@gmail.com";
+var QUOTES=["Small daily improvements lead to stunning results.","Consistency beats intensity.","1% better every day = 37x better in a year.","Discipline is choosing what you want most.","Your future is created by what you do today.","Hard work beats talent when talent does not work hard.","The secret of getting ahead is getting started.","Do not count the days, make the days count.","Success is small efforts repeated daily.","Push yourself. No one else will."];
+var MILES=[{d:3,i:"&#127793;",n:"Seedling"},{d:7,i:"&#128170;",n:"Warrior"},{d:14,i:"&#9889;",n:"Champion"},{d:21,i:"&#127942;",n:"21-Day Master"},{d:30,i:"&#128142;",n:"Legend"},{d:60,i:"&#128081;",n:"Diamond"},{d:100,i:"&#127775;",n:"Century"}];
+
+var U=null,UD=null,CD=new Date(),CM=new Date(),PD={},LD="",SK=0;
+
+function pad(n){return n<10?"0"+n:""+n;}
+function fm(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function td(){return fm(new Date());}
+function mk(s){return new Date(s+"T00:00:00");}
+function es(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}
+function ts(m){var t=document.getElementById("toast");t.innerHTML=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},2500);}
+
+function getTasksForDate(ds){
+  if(!UD||!UD.tasks) return [];
+  var dt=mk(ds),dow=dt.getDay(),dom=dt.getDate();
+  var result=[];
+  for(var i=0;i<UD.tasks.length;i++){
+    var t=UD.tasks[i];
+    if(t.freq==="daily"){result.push(t);continue;}
+    if(t.freq==="weekly"&&dow===1){result.push(t);continue;}
+    if(t.freq==="monthly"&&dom===1){result.push(t);continue;}
+    if(t.freq==="custom"&&t.startDate&&t.customDays){
+      var start=mk(t.startDate);
+      var diff=Math.round((dt-start)/864e5);
+      if(diff>=0&&diff%t.customDays===0){result.push(t);continue;}
+    }
+    if(t.freq==="project"&&t.startDate&&t.deadline){
+      var pStart=mk(t.startDate);
+      var pEnd=mk(t.deadline);
+      if(dt>=pStart&&dt<=pEnd){
+        var dayNum=getProjDayNum(t,ds);
+        if(dayNum>0&&dayNum<=t.totalDays){result.push(t);continue;}
+      }
+    }
+  }
+  return result;
+}
+
+function getProjDayNum(t,ds){
+  // Count working days from start to ds (inclusive)
+  var start=mk(t.startDate);
+  var target=mk(ds);
+  var count=0;
+  var d=new Date(start);
+  while(d<=target){
+    count++;
+    if(fm(d)===ds) return count<=t.totalDays?count:0;
+    d.setDate(d.getDate()+1);
+  }
+  return 0;
+}
+function cntDone(obj,ds){
+  var tasks=getTasksForDate(ds),done=0,total=tasks.length;
+  for(var i=0;i<tasks.length;i++) if(obj[tasks[i].id]) done++;
+  return{done:done,total:total};
+}
+
+function ld(ds,cb){db.collection("users").doc(U.uid).collection("days").doc(ds).get().then(function(d){cb(d.exists?d.data():{});}).catch(function(){cb({});});}
+function sv(ds,o,cb){db.collection("users").doc(U.uid).collection("days").doc(ds).set(o).then(function(){if(cb)cb();}).catch(function(){ts("Save error");});}
+
+// ── AUTH ──────────────────────────────────────────
+au.onAuthStateChanged(function(u){
+  if(u){U=u;db.collection("users").doc(U.uid).get().then(function(doc){
+    if(doc.exists&&doc.data().onboarded){UD=doc.data();showApp();}
+    else showOnboarding();
+  }).catch(function(){showOnboarding()});}
+  else{U=null;showLogin();}
+});
+
+// ── LOGIN ────────────────────────────────────────
+function showLogin(){
+  document.getElementById("root").innerHTML='<div class="login"><div style="font-size:48px">&#127775;</div><h1>1% Daily</h1><p>Track habits. Build streaks. Earn rewards.<br>Improve 1% every single day.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:280px;margin-top:40px"><div class="feat">&#9989; Daily, weekly &amp; monthly task tracking</div><div class="feat">&#127942; 21-day streak unlocks rewards</div><div class="feat">&#9997;&#65039; Create your own custom tasks</div><div class="feat">&#128202; Monthly Excel progress reports</div><div class="feat">&#128274; Private &amp; secure</div><div class="feat">&#128176; 100% free</div></div></div>';
+  document.getElementById("gl").onclick=function(){var p=new firebase.auth.GoogleAuthProvider();au.signInWithPopup(p).catch(function(e){if(e.code==="auth/popup-blocked")au.signInWithRedirect(p);else ts("Login failed");});};
+}
+
+// ── ONBOARDING ───────────────────────────────────
+var obTasks=[];
+var obStep=1;
+
+function showOnboarding(){
+  if(obStep===1) showObStep1();
+  else showObStep2();
+}
+
+function showObStep1(){
+  var root=document.getElementById("root");
+  var html='<div class="onboard"><div class="ob-step">Step 1 of 2</div><div class="ob-title">Welcome! Tell us about you</div><div class="ob-sub">This helps us personalize your experience.</div>';
+  html+='<div class="card"><label style="margin-top:0">Your Name</label>';
+  html+='<input id="obName" placeholder="Enter your full name" value="'+(U.displayName||"")+'">';
+  html+='<label>Date of Birth</label>';
+  html+='<input type="date" id="obDob" max="2015-01-01">';
+  html+='<div style="margin-top:20px"><button class="btn btn-purple" id="obNext">Next &#8250;</button></div></div></div>';
+  root.innerHTML=html;
+  document.getElementById("obNext").onclick=function(){
+    var name=document.getElementById("obName").value.trim();
+    var dob=document.getElementById("obDob").value;
+    if(!name){ts("Enter your name");return;}
+    if(!dob){ts("Enter your date of birth");return;}
+    UD={name:name,dob:dob,email:U.email,photo:U.photoURL};
+    obStep=2;
+    showObStep2();
+  };
+}
+
+function showObStep2(){
+  var root=document.getElementById("root");
+  var html='<div class="onboard"><div class="ob-step">Step 2 of 2</div><div class="ob-title">Create Your Tasks</div><div class="ob-sub">Add the habits and tasks you want to track. You can always edit later.</div>';
+
+  // Add task form
+  html+='<div class="card"><div class="card-t">&#10010; Add a Task or Project</div>';
+  html+='<div class="freq-pills" style="margin-bottom:12px"><span class="freq-pill on" data-m="task">&#9998; Task</span><span class="freq-pill" data-m="project">&#128197; Project</span></div>';
+
+  // Task form
+  html+='<div id="taskForm"><label style="margin-top:0">Task Name</label>';
+  html+='<input id="atName" placeholder="e.g. Workout, Read 30 min, Cold outreach...">';
+  html+='<label>Description (optional)</label>';
+  html+='<input id="atDesc" placeholder="Brief description">';
+  html+='<label>Frequency</label>';
+  html+='<div class="freq-pills"><span class="freq-pill on" data-f="daily">Daily</span><span class="freq-pill" data-f="weekly">Weekly (Mon)</span><span class="freq-pill" data-f="monthly">Monthly (1st)</span><span class="freq-pill" data-f="custom">Every X days</span></div>';
+  html+='<div id="customDaysWrap" style="display:none;margin-top:8px"><label>Repeat every how many days?</label><input id="atCustomDays" type="number" min="2" max="90" placeholder="e.g. 3 = every 3rd day" value="3"></div>';
+  html+='<label>Track a number? (optional)</label>';
+  html+='<input id="atNum" placeholder="e.g. Responses received, Pages read...">';
+  html+='<div style="margin-top:12px"><button class="btn btn-purple btn-small" id="atAdd">+ Add Task</button></div></div>';
+
+  // Project form
+  html+='<div id="projForm" style="display:none"><label style="margin-top:0">Project Name</label>';
+  html+='<input id="apName" placeholder="e.g. Pitch Deck for Startup X, Revit Model...">';
+  html+='<label>Description (optional)</label>';
+  html+='<input id="apDesc" placeholder="What is this project about?">';
+  html+='<label>Total Hours Needed</label>';
+  html+='<input id="apHours" type="number" min="1" max="500" placeholder="e.g. 20">';
+  html+='<label>Deadline</label>';
+  html+='<input id="apDeadline" type="date" min="'+fm(new Date())+'">';
+  html+='<div style="background:#f5f5f7;border-radius:10px;padding:10px;margin-top:8px;font-size:12px;color:#86868b" id="projCalc"></div>';
+  html+='<div style="margin-top:12px"><button class="btn btn-green btn-small" id="apAdd">+ Add Project</button></div></div>';
+
+  html+='</div>';
+
+  // Task list
+  html+='<div class="card"><div class="card-t">Your Tasks ('+obTasks.length+')</div><div id="obList">';
+  if(obTasks.length===0) html+='<div class="empty">No tasks yet. Add at least 1 above.</div>';
+  for(var i=0;i<obTasks.length;i++){
+    var t=obTasks[i];
+    var fLabel=t.freq;
+    if(t.freq==="custom") fLabel="Every "+t.customDays+"d";
+    if(t.freq==="project") fLabel="Project "+t.totalDays+"d";
+    html+='<div class="task-preview"><div class="name">'+es(t.name)+'</div><div class="freq">'+fLabel+'</div><span class="del" data-ri="'+i+'">&#215;</span></div>';
+  }
+  html+='</div></div>';
+
+  html+='<button class="btn btn-green" id="obDone" style="margin-bottom:20px"'+(obTasks.length===0?" disabled":"")+'>&#10003; Finish Setup &amp; Start Tracking</button>';
+  html+='<button style="background:none;border:none;color:#86868b;font-size:13px;cursor:pointer;width:100%;text-align:center;padding:10px" id="obBack">&#8249; Back to Step 1</button>';
+  html+='</div>';
+  root.innerHTML=html;
+
+  // Mode toggle (Task vs Project)
+  var mode="task";
+  var modePills=document.querySelectorAll("[data-m]");
+  for(var i=0;i<modePills.length;i++) modePills[i].onclick=function(){
+    mode=this.dataset.m;
+    for(var j=0;j<modePills.length;j++) modePills[j].className="freq-pill"+(modePills[j].dataset.m===mode?" on":"");
+    document.getElementById("taskForm").style.display=mode==="task"?"":"none";
+    document.getElementById("projForm").style.display=mode==="project"?"":"none";
+  };
+
+  // Freq pills
+  var selFreq="daily";
+  var pills=document.querySelectorAll("[data-f]");
+  for(var i=0;i<pills.length;i++) pills[i].onclick=function(){
+    selFreq=this.dataset.f;
+    for(var j=0;j<pills.length;j++) pills[j].className="freq-pill"+(pills[j].dataset.f===selFreq?" on":"");
+    var cw=document.getElementById("customDaysWrap");
+    if(cw) cw.style.display=selFreq==="custom"?"":"none";
+  };
+
+  // Project calculator
+  var apH=document.getElementById("apHours");
+  var apD=document.getElementById("apDeadline");
+  function calcProj(){
+    var hrs=parseInt(apH?apH.value:0)||0;
+    var dl=apD?apD.value:"";
+    var el=document.getElementById("projCalc");
+    if(!el||!hrs||!dl) {if(el) el.textContent="Enter hours and deadline to see plan.";return;}
+    var daysNeeded=Math.ceil(hrs/2);
+    var daysAvail=Math.ceil((mk(dl)-new Date())/864e5);
+    if(daysAvail<=0){el.innerHTML="&#9888; Deadline is in the past!";return;}
+    if(daysNeeded>daysAvail){el.innerHTML="&#9888; Not enough time! Need <b>"+daysNeeded+" days</b> but only <b>"+daysAvail+" days</b> left. Increase deadline or reduce hours.";}
+    else{el.innerHTML="&#9989; <b>"+hrs+" hours</b> &#247; 2 hrs/day = <b>"+daysNeeded+" working days</b>. You have "+daysAvail+" days until deadline. Shows as <b>'Project &#8212; Day X/"+daysNeeded+"'</b> in your daily tasks.";}
+  }
+  if(apH) apH.oninput=calcProj;
+  if(apD) apD.oninput=calcProj;
+
+  // Add task
+  document.getElementById("atAdd").onclick=function(){
+    var name=document.getElementById("atName").value.trim();
+    if(!name){ts("Enter task name");return;}
+    var desc=document.getElementById("atDesc").value.trim();
+    var numLabel=document.getElementById("atNum").value.trim();
+    var taskObj={id:"t_"+Date.now()+"_"+obTasks.length,name:name,desc:desc||"",freq:selFreq,numId:numLabel?("n_"+Date.now()):"",numLabel:numLabel,startDate:td()};
+    if(selFreq==="custom"){
+      var cd=parseInt(document.getElementById("atCustomDays").value)||3;
+      if(cd<2) cd=2;
+      taskObj.customDays=cd;
+    }
+    obTasks.push(taskObj);
+    showObStep2();
+  };
+
+  // Add project
+  var apAddBtn=document.getElementById("apAdd");
+  if(apAddBtn) apAddBtn.onclick=function(){
+    var name=(document.getElementById("apName").value||"").trim();
+    if(!name){ts("Enter project name");return;}
+    var desc=(document.getElementById("apDesc").value||"").trim();
+    var hrs=parseInt(document.getElementById("apHours").value)||0;
+    var dl=document.getElementById("apDeadline").value;
+    if(!hrs||hrs<1){ts("Enter total hours");return;}
+    if(!dl){ts("Set a deadline");return;}
+    var daysNeeded=Math.ceil(hrs/2);
+    var daysAvail=Math.ceil((mk(dl)-new Date())/864e5);
+    if(daysAvail<=0){ts("Deadline is in the past");return;}
+    if(daysNeeded>daysAvail){ts("Not enough time! Need "+daysNeeded+" days, only "+daysAvail+" available. Increase deadline or reduce hours.");return;}
+    obTasks.push({id:"p_"+Date.now(),name:name,desc:desc||"",freq:"project",totalHours:hrs,hoursPerDay:2,deadline:dl,startDate:td(),totalDays:daysNeeded,numId:"",numLabel:""});
+    showObStep2();
+  };
+
+  // Delete
+  var dels=document.querySelectorAll("[data-ri]");
+  for(var i=0;i<dels.length;i++) dels[i].onclick=function(){obTasks.splice(parseInt(this.dataset.ri),1);showObStep2();};
+
+  // Back
+  document.getElementById("obBack").onclick=function(){obStep=1;showObStep1();};
+
+  // Finish
+  document.getElementById("obDone").onclick=function(){
+    if(obTasks.length===0){ts("Add at least 1 task");return;}
+    this.disabled=true;this.textContent="Setting up...";
+    var userData={name:UD.name,dob:UD.dob,email:UD.email||U.email,photo:UD.photo||U.photoURL,tasks:obTasks,onboarded:true,created:firebase.firestore.FieldValue.serverTimestamp()};
+    db.collection("users").doc(U.uid).set(userData).then(function(){
+      UD=userData;
+      // Notify admin of new user
+      notifyNewUser(userData);
+      showApp();
+    }).catch(function(e){ts("Error: "+e.message);});
+  };
+}
+
+function notifyNewUser(data){
+  // Save to signups collection for admin tracking
+  db.collection("signups").add({uid:U.uid,name:data.name,email:data.email,dob:data.dob,taskCount:data.tasks.length,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  // Try to send email via FormSubmit (free service)
+  try{
+    fetch("https://formsubmit.co/ajax/"+ADMIN_EMAIL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({_subject:"New User Signup - 1% Daily",Name:data.name,Email:data.email,DOB:data.dob,Tasks:data.tasks.length+" tasks created","Signed Up":new Date().toLocaleString("en-IN")})}).catch(function(){});
+  }catch(e){}
+}
+
+// ── APP SHELL ────────────────────────────────────
+function showApp(){
+  var nm=(UD.name||"User").split(" ")[0];
+  var hr=new Date().getHours();
+  var g=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
+  var ph=UD.photo?'<img class="av" src="'+UD.photo+'" alt="">':'';
+  var root=document.getElementById("root");
+  root.innerHTML='<div class="app"><div class="hdr">'+ph+'<div class="info"><div class="lbl">1% Better Every Day</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="so" id="lob">Sign Out</button></div><div class="tabs" id="tbs"><button class="tb on" data-t="today">Today</button><button class="tb" data-t="cal">Calendar</button><button class="tb" data-t="rew">Rewards</button><button class="tb" data-t="rep">Report</button></div><div id="vt"></div><div id="vc" style="display:none"></div><div id="vr" style="display:none"></div><div id="vp" style="display:none"></div></div>';
+
+  document.getElementById("lob").onclick=function(){au.signOut();};
+  document.getElementById("tbs").onclick=function(e){var b=e.target;if(!b.dataset||!b.dataset.t)return;var t=b.dataset.t;var bs=document.querySelectorAll(".tb");for(var i=0;i<bs.length;i++)bs[i].className=bs[i].dataset.t===t?"tb on":"tb";document.getElementById("vt").style.display=t==="today"?"":"none";document.getElementById("vc").style.display=t==="cal"?"":"none";document.getElementById("vr").style.display=t==="rew"?"":"none";document.getElementById("vp").style.display=t==="rep"?"":"none";if(t==="today")rT();if(t==="cal")rC();if(t==="rew")rR();if(t==="rep")rP();};
+  LD="";rT();cS();
+}
+
+// ── TODAY ─────────────────────────────────────────
+function rT(){
+  var ds=fm(CD),it=ds===td(),fu=CD>new Date();
+  var past=!it&&!fu; // strictly past
+  if(ds!==LD){LD=ds;ld(ds,function(o){PD=o;bT(ds,it,fu,past);});}
+  else bT(ds,it,fu,past);
+}
+
+function bT(ds,it,fu,past){
+  var tasks=getTasksForDate(ds);
+  var dl=CD.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"});
+  var dot=it?' <span style="display:inline-block;width:7px;height:7px;background:#34C759;border-radius:50%;vertical-align:middle"></span>':"";
+  var sub=it?"Today":String(CD.getFullYear());
+  var locked=past; // only today is editable
+
+  var h='<div class="dn"><button id="dp">&#8249;</button><div style="text-align:center"><div style="font-size:15px;font-weight:700">'+dl+dot+'</div><div style="font-size:11px;color:#86868b">'+sub+'</div></div><button id="dnn">&#8250;</button></div>';
+
+  if(locked) h+='<div class="locked-msg">&#128274; This day is locked. You can only fill today\'s tasks.</div>';
+  if(fu) h+='<div class="locked-msg">&#128338; Future date. Come back on this day to fill tasks.</div>';
+
+  if(tasks.length===0){
+    h+='<div class="card"><div class="empty">No tasks scheduled for this day.</div></div>';
+  } else {
+    h+='<div class="card"><div class="card-t">&#128203; Tasks for Today ('+tasks.length+')</div>';
+    for(var i=0;i<tasks.length;i++) h+=buildRow(tasks[i],PD,locked||fu,ds);
+    h+='</div>';
+  }
+
+  // Add Task/Project + Feedback (only on today)
+  if(it){
+    h+='<div class="card"><div class="card-t" id="addToggle" style="cursor:pointer">&#10010; Add New Task or Project &#9660;</div>';
+    h+='<div id="addPanel" style="display:none">';
+    h+='<div class="freq-pills" style="margin-bottom:10px"><span class="freq-pill on" data-am="task">&#9998; Task</span><span class="freq-pill" data-am="project">&#128197; Project</span></div>';
+    h+='<div id="qTF"><label style="margin-top:0">Task Name</label><input id="qName" placeholder="e.g. Workout, Read 30 min..."><label>Description (optional)</label><input id="qDesc" placeholder="Brief description"><label>Frequency</label>';
+    h+='<div class="freq-pills"><span class="freq-pill on" data-qf="daily">Daily</span><span class="freq-pill" data-qf="weekly">Weekly</span><span class="freq-pill" data-qf="monthly">Monthly</span><span class="freq-pill" data-qf="custom">Every X days</span></div>';
+    h+='<div id="qCW" style="display:none"><label>Repeat every how many days?</label><input id="qCD" type="number" min="2" max="90" value="3"></div>';
+    h+='<label>Track a number? (optional)</label><input id="qNL" placeholder="e.g. Responses received">';
+    h+='<button class="btn btn-purple btn-small" id="qAT" style="width:100%;margin-top:10px">+ Add Task</button></div>';
+    h+='<div id="qPF" style="display:none"><label style="margin-top:0">Project Name</label><input id="qPN" placeholder="e.g. Pitch Deck for Startup X"><label>Description (optional)</label><input id="qPD2" placeholder="What is this project about?"><label>Total Hours Needed</label><input id="qPH" type="number" min="1" max="500" placeholder="e.g. 20"><label>Deadline</label><input id="qPDL" type="date" min="'+fm(new Date())+'">';
+    h+='<div id="qPC" style="font-size:11px;color:#86868b;margin-top:6px"></div>';
+    h+='<button class="btn btn-green btn-small" id="qAP" style="width:100%;margin-top:10px">+ Add Project</button></div>';
+    h+='</div></div>';
+
+    h+='<div class="card"><div class="card-t">&#128172; Suggestions &amp; Feedback</div>';
+    h+='<textarea id="ft" placeholder="Share feedback or feature requests..." rows="2"></textarea>';
+    h+='<button class="btn btn-purple btn-small" id="fb" style="width:100%;margin-top:8px">&#128233; Send Feedback</button></div>';
+  }
+
+  var doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/864e5);
+  h+='<div class="quote">"'+QUOTES[doy%QUOTES.length]+'"</div>';
+
+  if(it) h+='<div class="sub-wrap"><button class="sub-btn" id="sbtn">&#10003; Submit Progress</button></div>';
+
+  document.getElementById("vt").innerHTML=h;
+  bindT(ds,locked||fu,it);
+}
+
+function buildRow(t,obj,dis,ds){
+  var on=!!obj[t.id];
+  var freqLabel=t.freq;
+  if(t.freq==="custom") freqLabel="Every "+t.customDays+"d";
+  var nameExtra="";
+  if(t.freq==="project"){
+    var dn=getProjDayNum(t,ds);
+    freqLabel="project";
+    nameExtra=" &#8212; Day "+dn+"/"+t.totalDays;
+  }
+  var h='<div class="rw'+(on?" dn3":"")+'" data-tid="'+t.id+'">';
+  h+='<div class="ck'+(on?" on":"")+'"></div>';
+  h+='<div style="flex:1"><div class="tn">'+es(t.name)+nameExtra+'<span class="freq-tag">'+freqLabel+'</span></div>';
+  if(t.desc) h+='<div class="td2">'+es(t.desc)+'</div>';
+  if(t.freq==="project") h+='<div class="td2" style="color:#6C5CE7">&#9201; 2 hrs today &#183; Deadline: '+t.deadline+'</div>';
+  if(t.numId){var v=obj[t.numId]||0;h+='<div class="nb" data-stop="1"><span>'+es(t.numLabel)+'</span><input type="number" min="0" value="'+v+'" data-nid="'+t.numId+'"'+(dis?" disabled":"")+'></div>';}
+  h+='</div></div>';
+  return h;
+}
+
+function bindT(ds,dis,it){
+  document.getElementById("dp").onclick=function(){CD.setDate(CD.getDate()-1);LD="";rT();};
+  document.getElementById("dnn").onclick=function(){CD.setDate(CD.getDate()+1);LD="";rT();};
+
+  if(!dis){
+    var rows=document.querySelectorAll("[data-tid]");
+    for(var i=0;i<rows.length;i++) rows[i].addEventListener("click",function(e){
+      if(e.target.closest("[data-stop]"))return;
+      PD[this.getAttribute("data-tid")]=!PD[this.getAttribute("data-tid")];
+      bT(ds,ds===td(),false,false);
+    });
+    var nums=document.querySelectorAll("[data-nid]");
+    for(var i=0;i<nums.length;i++) nums[i].addEventListener("change",function(){PD[this.getAttribute("data-nid")]=parseInt(this.value)||0;});
+  }
+
+  var sb=document.getElementById("sbtn");
+  if(sb){sb.onclick=function(){sb.disabled=true;sb.textContent="Saving...";sv(ds,PD,function(){var c=cntDone(PD,ds);sb.innerHTML="&#10003; Saved! "+c.done+"/"+c.total+" done";sb.classList.add("saved");ts("&#9989; Progress saved!");cS();setTimeout(function(){sb.innerHTML="&#10003; Submit Progress";sb.classList.remove("saved");sb.disabled=false;},3000);});};}
+
+  var fb=document.getElementById("fb"),ft=document.getElementById("ft");
+  if(fb){fb.onclick=function(){var m=ft.value.trim();if(!m){ts("Write something");return;}fb.disabled=true;fb.textContent="Sending...";db.collection("feedback").add({uid:U.uid,name:UD.name,email:UD.email,msg:m,ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){ft.value="";fb.disabled=false;fb.innerHTML="&#128233; Send Feedback";ts("&#128154; Thanks!");}).catch(function(){fb.disabled=false;fb.innerHTML="&#128233; Send Feedback";});};}
+
+  // Add Task/Project toggle
+  var addTgl=document.getElementById("addToggle");
+  if(addTgl){
+    addTgl.onclick=function(){
+      var p=document.getElementById("addPanel");
+      if(p.style.display==="none"){p.style.display="";addTgl.innerHTML="&#10010; Add New Task or Project &#9650;";}
+      else{p.style.display="none";addTgl.innerHTML="&#10010; Add New Task or Project &#9660;";}
+    };
+    // Mode toggle
+    var addMode="task";
+    var ams=document.querySelectorAll("[data-am]");
+    for(var i=0;i<ams.length;i++) ams[i].onclick=function(){
+      addMode=this.dataset.am;
+      for(var j=0;j<ams.length;j++) ams[j].className="freq-pill"+(ams[j].dataset.am===addMode?" on":"");
+      var tf=document.getElementById("qTF"),pf=document.getElementById("qPF");
+      if(tf) tf.style.display=addMode==="task"?"":"none";
+      if(pf) pf.style.display=addMode==="project"?"":"none";
+    };
+    // Freq pills for task
+    var qFreq="daily";
+    var qfs=document.querySelectorAll("[data-qf]");
+    for(var i=0;i<qfs.length;i++) qfs[i].onclick=function(){
+      qFreq=this.dataset.qf;
+      for(var j=0;j<qfs.length;j++) qfs[j].className="freq-pill"+(qfs[j].dataset.qf===qFreq?" on":"");
+      var cw=document.getElementById("qCW");
+      if(cw) cw.style.display=qFreq==="custom"?"":"none";
+    };
+    // Project calculator
+    var qph=document.getElementById("qPH"),qpdl=document.getElementById("qPDL");
+    function qCalc(){
+      var hrs=parseInt(qph?qph.value:0)||0;
+      var dl=qpdl?qpdl.value:"";
+      var el=document.getElementById("qPC");
+      if(!el||!hrs||!dl){if(el)el.textContent="";return;}
+      var dn=Math.ceil(hrs/2),da=Math.ceil((mk(dl)-new Date())/864e5);
+      if(da<=0){el.innerHTML="&#9888; Deadline is in the past!";}
+      else if(dn>da){el.innerHTML="&#9888; Need "+dn+" days but only "+da+" available.";}
+      else{el.innerHTML="&#9989; "+hrs+"hrs &#247; 2hrs/day = "+dn+" days. "+da+" days available.";}
+    }
+    if(qph) qph.oninput=qCalc;
+    if(qpdl) qpdl.oninput=qCalc;
+    // Add task button
+    var qat=document.getElementById("qAT");
+    if(qat) qat.onclick=function(){
+      var n=(document.getElementById("qName").value||"").trim();
+      if(!n){ts("Enter task name");return;}
+      var d2=(document.getElementById("qDesc").value||"").trim();
+      var nl=(document.getElementById("qNL").value||"").trim();
+      var newTask={id:"t_"+Date.now(),name:n,desc:d2,freq:qFreq,numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()};
+      if(qFreq==="custom"){newTask.customDays=parseInt(document.getElementById("qCD").value)||3;}
+      UD.tasks.push(newTask);
+      db.collection("users").doc(U.uid).update({tasks:UD.tasks}).then(function(){ts("&#9989; Task added!");LD="";rT();}).catch(function(){ts("Error saving");});
+    };
+    // Add project button
+    var qap=document.getElementById("qAP");
+    if(qap) qap.onclick=function(){
+      var n=(document.getElementById("qPN").value||"").trim();
+      if(!n){ts("Enter project name");return;}
+      var d2=(document.getElementById("qPD2").value||"").trim();
+      var hrs=parseInt(document.getElementById("qPH").value)||0;
+      var dl=document.getElementById("qPDL").value;
+      if(!hrs){ts("Enter hours");return;}
+      if(!dl){ts("Set deadline");return;}
+      var dn=Math.ceil(hrs/2),da=Math.ceil((mk(dl)-new Date())/864e5);
+      if(da<=0){ts("Deadline in the past");return;}
+      if(dn>da){ts("Not enough time");return;}
+      UD.tasks.push({id:"p_"+Date.now(),name:n,desc:d2,freq:"project",totalHours:hrs,hoursPerDay:2,deadline:dl,startDate:td(),totalDays:dn,numId:"",numLabel:""});
+      db.collection("users").doc(U.uid).update({tasks:UD.tasks}).then(function(){ts("&#9989; Project added!");LD="";rT();}).catch(function(){ts("Error saving");});
+    };
+  }
+}
+
+// ── STREAK ────────────────────────────────────────
+function cS(){
+  var s=0,d=new Date(),c2=0;
+  function go(){
+    if(c2>=120){SK=s;dS();return;}
+    var ds=fm(d);
+    ld(ds,function(o){
+      var c=cntDone(o,ds);
+      if(c.total===0&&ds!==td()){SK=s;dS();return;}
+      if(c.done>0&&c.done>=Math.ceil(c.total*0.6))s++;
+      else if(ds!==td()){SK=s;dS();return;}
+      d.setDate(d.getDate()-1);c2++;go();
+    });
+  }
+  go();
+}
+function dS(){var el=document.getElementById("stk");if(!el)return;if(SK>0)el.innerHTML="&#128293; <b>"+SK+" day"+(SK>1?"s":"")+"</b> streak";else el.textContent="Start your streak today";}
+
+// ── CALENDAR ──────────────────────────────────────
+function rC(){
+  var y=CM.getFullYear(),m=CM.getMonth();
+  var ml=CM.toLocaleDateString("en-IN",{month:"long",year:"numeric"});
+  var f=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),now=new Date();
+  var h='<div class="card"><div class="mn"><button id="cmp">&#8249;</button><span style="font-size:15px;font-weight:700">'+ml+'</span><button id="cmn">&#8250;</button></div><div class="cg">';
+  ["S","M","T","W","T","F","S"].forEach(function(d){h+='<div class="ch">'+d+'</div>';});
+  for(var i=0;i<f;i++)h+='<div></div>';
+  for(var d=1;d<=dim;d++)h+='<div class="cy" data-cd="'+y+"-"+pad(m+1)+"-"+pad(d)+'" id="cd'+d+'">'+d+'</div>';
+  h+='</div></div><div id="cdtl"></div>';
+  document.getElementById("vc").innerHTML=h;
+  document.getElementById("cmp").onclick=function(){CM.setMonth(CM.getMonth()-1);rC();};
+  document.getElementById("cmn").onclick=function(){CM.setMonth(CM.getMonth()+1);rC();};
+  for(var d=1;d<=dim;d++)(function(d){
+    var ds=y+"-"+pad(m+1)+"-"+pad(d),dt=new Date(y,m,d);
+    if(dt>now)return;
+    ld(ds,function(o){var el=document.getElementById("cd"+d);if(!el)return;if(ds===td())el.classList.add("now");var c=cntDone(o,ds);if(c.done>0&&c.done===c.total)el.classList.add("pf");else if(c.done>0)el.classList.add("pt");});
+  })(d);
+  document.querySelectorAll("[data-cd]").forEach(function(el){el.onclick=function(){var ds=this.getAttribute("data-cd");if(mk(ds)>new Date())return;ld(ds,function(o){sDtl(ds,o);});};});
+}
+function sDtl(ds,obj){
+  var tasks=getTasksForDate(ds),c=cntDone(obj,ds);
+  var dl=mk(ds).toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"});
+  var pct=c.total>0?Math.round(c.done/c.total*100):0;
+  var h='<div class="card"><div class="card-t">'+dl+" - "+pct+'%</div>';
+  if(tasks.length===0)h+='<div class="empty">No tasks scheduled</div>';
+  else for(var i=0;i<tasks.length;i++){var t=tasks[i],ok=!!obj[t.id];h+='<div style="font-size:13px;padding:4px 0;color:'+(ok?"#34C759":"#d1d1d6")+'"><b>'+(ok?"&#10003;":"&#10005;")+"</b> "+es(t.name)+" <span class='freq-tag'>"+t.freq+"</span></div>";if(t.numId&&obj[t.numId])h+='<div style="font-size:11px;color:#86868b;padding-left:20px">&#8627; '+es(t.numLabel)+": "+obj[t.numId]+"</div>";}
+  h+="</div>";document.getElementById("cdtl").innerHTML=h;
+}
+
+// ── REWARDS ──────────────────────────────────────
+function rR(){
+  var s=SK,h="";
+  if(s>=21){var code=gC(U.uid);h+='<div class="rew-banner"><div style="font-size:36px">&#127942;</div><div style="font-size:18px;font-weight:800;margin-top:4px">21-Day Streak Achieved!</div><div style="font-size:12px;margin-top:4px;opacity:.8">Your exclusive reward code:</div><div class="rew-code" id="cc">'+code+'</div><button class="btn btn-purple btn-small" id="cpb" style="margin-top:10px">Copy Code</button></div>';}
+  else{h+='<div class="card" style="text-align:center;padding:24px"><div style="font-size:40px">&#128293;</div><div style="font-size:20px;font-weight:800;margin-top:6px">'+s+' / 21 Days</div><div style="font-size:12px;color:#86868b;margin-top:4px">Complete 21-day streak to unlock your reward</div><div class="pbar"><div class="pfill" style="width:'+Math.round(s/21*100)+'%"></div></div><div style="font-size:11px;color:#86868b;margin-top:6px">'+Math.round(s/21*100)+'% complete</div></div>';}
+  h+='<div class="card"><div class="card-t">&#127941; Milestones</div>';
+  for(var i=0;i<MILES.length;i++){var m=MILES[i],e=s>=m.d;h+='<div class="ms"><div style="font-size:24px;width:36px;text-align:center">'+m.i+'</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.n+'</div><div style="font-size:11px;color:#86868b">'+m.d+'-day streak</div></div><div style="font-size:11px;font-weight:700;color:'+(e?"#34C759":"#d1d1d6")+'">'+(e?"&#10003; Earned":m.d+" days")+'</div></div>';}
+  h+='</div>';
+  h+='<div class="card"><div class="card-t">&#127895; Badges</div><div class="badge-row">';
+  for(var i=0;i<MILES.length;i++){var m=MILES[i],e=s>=m.d;var bcls=e?(m.d>=21?" gold":" earned"):"";h+='<span class="badge'+bcls+'">'+(e?m.i+" "+m.n:"&#128274; "+m.d+"d")+'</span>';}
+  h+='</div></div>';
+  document.getElementById("vr").innerHTML=h;
+  if(s>=21){document.getElementById("cpb").onclick=function(){var c=document.getElementById("cc").textContent;if(navigator.clipboard)navigator.clipboard.writeText(c);ts("&#127942; Copied!");};}
+}
+function gC(uid){var ch="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",h=0;for(var i=0;i<uid.length;i++){h=((h<<5)-h)+uid.charCodeAt(i);h|=0;}h=Math.abs(h);var c="1PCT-";for(var i=0;i<6;i++){c+=ch[h%ch.length];h=Math.floor(h/ch.length)+i*7+13;}return c;}
+
+// ── REPORT ───────────────────────────────────────
+function rP(){
+  var now=new Date(),opts="";
+  for(var i=0;i<6;i++){var d=new Date(now.getFullYear(),now.getMonth()-i,1);var v=d.getFullYear()+"-"+pad(d.getMonth()+1);opts+='<option value="'+v+'">'+d.toLocaleDateString("en-IN",{month:"long",year:"numeric"})+"</option>";}
+  document.getElementById("vp").innerHTML='<div class="card"><div class="card-t">&#128202; Monthly Report</div><select id="rm">'+opts+'</select><div id="rb"><div class="empty">Loading...</div></div><button class="btn btn-green" id="rdl">&#128229; Download Excel Report</button></div>';
+  document.getElementById("rm").onchange=lR;
+  document.getElementById("rdl").onclick=dlX;
+  lR();
+}
+function lR(){
+  var ym=document.getElementById("rm").value,pt=ym.split("-"),y=parseInt(pt[0]),m=parseInt(pt[1]);
+  var dim=new Date(y,m,0).getDate(),loaded=0,rows=[],target=0;
+  for(var d=1;d<=dim;d++){var ds=y+"-"+pad(m)+"-"+pad(d);if(mk(ds)>new Date())break;target++;}
+  if(target===0){sRS([]);return;}
+  for(var d=1;d<=target;d++)(function(d){
+    var ds=y+"-"+pad(m)+"-"+pad(d);
+    ld(ds,function(o){rows[d-1]={ds:ds,obj:o,c:cntDone(o,ds)};loaded++;if(loaded>=target)sRS(rows.filter(Boolean));});
+  })(d);
+}
+function sRS(rows){
+  var ts2=0,tp=0,active=0,perfect=0;
+  for(var i=0;i<rows.length;i++){ts2+=rows[i].c.done;tp+=rows[i].c.total;if(rows[i].c.done>0)active++;if(rows[i].c.done===rows[i].c.total&&rows[i].c.total>0)perfect++;}
+  var pct=tp>0?Math.round(ts2/tp*100):0;
+  var col=pct>=70?"#34C759":pct>=40?"#FF9500":"#FF3B30";
+  document.getElementById("rb").innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="sb"><div class="big" style="color:'+col+'">'+pct+'%</div><div class="sm">Overall Score</div></div><div class="sb"><div class="big" style="color:#6C5CE7">'+active+'</div><div class="sm">Active Days</div></div><div class="sb"><div class="big" style="color:#FF9500">'+perfect+'</div><div class="sm">Perfect Days</div></div><div class="sb"><div class="big" style="color:#007AFF">'+rows.length+'</div><div class="sm">Days Tracked</div></div></div>';
+  window._rr=rows;
+}
+function dlX(){
+  var rows=window._rr;if(!rows||!rows.length){ts("No data");return;}
+  var tasks=UD.tasks||[];var ym=document.getElementById("rm").value;
+  var mn=UD.name+" | "+new Date(parseInt(ym.split("-")[0]),parseInt(ym.split("-")[1])-1).toLocaleDateString("en-IN",{month:"long",year:"numeric"});
+  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><style>table{border-collapse:collapse;font-family:Calibri;font-size:11px}td,th{border:1px solid #D9D9D9;padding:6px 8px;text-align:center}.t{font-size:18px;font-weight:bold;color:#6C5CE7;border:none;text-align:left;padding:10px}.hab{text-align:left;font-weight:600;background:#FAFAFA}.dh{background:#F5F5F5;font-weight:bold;font-size:10px}.y{background:#C8E6C9;color:#2E7D32;font-weight:bold}.n{color:#DDD}.pg{background:#E8F5E9;color:#2E7D32;font-weight:bold}.po{background:#FFF8E1;color:#F57F17;font-weight:bold}.pb{background:#FFEBEE;color:#C62828;font-weight:bold}</style></head><body>';
+  var cols=rows.length+2;
+  h+='<table><tr><td class="t" colspan="'+cols+'">&#127775; 1% Daily Habit Tracker</td></tr><tr><td style="border:none;color:#888;text-align:left" colspan="'+cols+'">'+mn+'</td></tr><tr><td colspan="'+cols+'" style="border:none">&nbsp;</td></tr>';
+  h+='<tr><th class="dh" style="text-align:left;min-width:180px">Habit</th>';
+  for(var i=0;i<rows.length;i++){var d=mk(rows[i].ds);h+='<th class="dh" style="min-width:28px">'+(i+1)+'<br><span style="font-size:8px;color:#999">'+d.toLocaleDateString("en-IN",{weekday:"narrow"})+"</span></th>";}
+  h+='<th class="dh">%</th></tr>';
+  for(var i=0;i<tasks.length;i++){var t=tasks[i],dn2=0;
+    h+='<tr><td class="hab">'+t.name+' <span style="font-size:9px;color:#999">['+t.freq+']</span></td>';
+    for(var j=0;j<rows.length;j++){var active=getTasksForDate(rows[j].ds).some(function(x){return x.id===t.id;});var on=active&&!!rows[j].obj[t.id];if(on)dn2++;h+='<td class="'+(active?(on?"y":"n"):"n")+'">'+(active?(on?"&#10003;":"-"):".")+"</td>";}
+    var p=rows.length>0?Math.round(dn2/rows.length*100):0;
+    h+='<td class="'+(p>=70?"pg":p>=40?"po":"pb")+'">'+p+'%</td></tr>';}
+  // Daily score
+  h+='<tr><td colspan="'+cols+'" style="border:none">&nbsp;</td></tr><tr><td class="hab" style="background:#EDE7F6">Daily Score</td>';
+  var td2=0,tp2=0;
+  for(var i=0;i<rows.length;i++){var c=rows[i].c,p=c.total>0?Math.round(c.done/c.total*100):0;td2+=c.done;tp2+=c.total;h+='<td class="'+(p>=70?"pg":p>=40?"po":p>0?"pb":"n")+'">'+(p>0?p+"%":"-")+"</td>";}
+  var op=tp2>0?Math.round(td2/tp2*100):0;
+  h+='<td class="'+(op>=70?"pg":op>=40?"po":"pb")+'">'+op+'%</td></tr></table></body></html>';
+  var blob=new Blob([h],{type:"application/vnd.ms-excel"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Progress_"+ym+".xls";document.body.appendChild(a);a.click();document.body.removeChild(a);ts("&#128229; Downloaded!");
+}
+</script>
+</body>
+</html>
