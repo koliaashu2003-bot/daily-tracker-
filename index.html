@@ -205,7 +205,8 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 
 /* Dashboard week grid */
 .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.week-day{background:var(--card2);border-radius:10px;padding:10px 4px;text-align:center;border:1px solid var(--border);transition:all .15s}
+.week-day{background:var(--card2);border-radius:10px;padding:10px 4px;text-align:center;border:1px solid var(--border);transition:all .15s;cursor:pointer}
+.week-day:hover{box-shadow:var(--shadow);border-color:var(--border2)}
 .week-day.today{border-color:var(--accent);border-width:2px;background:var(--accent-bg)}
 .week-day .wd-name{font-size:10px;font-weight:700;color:var(--text3)}
 .week-day .wd-date{font-size:13px;font-weight:600;margin-top:2px;color:var(--text)}
@@ -546,7 +547,7 @@ function rDash(el,titleHtml){
   h+='<div class="card"><div class="card-t">This Week</div><div class="week-grid">';
   var sow=new Date(now);sow.setDate(now.getDate()-now.getDay());
   for(var i=0;i<7;i++){var wd=new Date(sow);wd.setDate(sow.getDate()+i);var wds=fm(wd),wt=getTasksForDate(wds);
-    h+='<div class="week-day'+(wds===ds?" today":"")+'"><div class="wd-name">'+DN[i]+'</div><div class="wd-date">'+wd.getDate()+'</div><div class="wd-count">'+wt.length+'</div></div>';}
+    h+='<div class="week-day'+(wds===ds?" today":"")+'" data-wds="'+wds+'"><div class="wd-name">'+DN[i]+'</div><div class="wd-date">'+wd.getDate()+'</div><div class="wd-count">'+wt.length+'</div></div>';}
   h+='</div></div>';
   h+='</div><div class="dash-right">';
   // Next week
@@ -554,7 +555,7 @@ function rDash(el,titleHtml){
   var nm2=new Date(now);nm2.setDate(now.getDate()+(7-now.getDay()+1));
   var hasN=false;
   for(var i=0;i<7;i++){var nw=new Date(nm2);nw.setDate(nm2.getDate()+i);var nds=fm(nw),nt=getTasksForDate(nds);
-    if(nt.length){hasN=true;h+='<div class="nw-row"><div class="nw-day">'+DN[nw.getDay()]+' '+nw.getDate()+'</div><div class="nw-tasks">'+nt.map(function(t){return es(t.name);}).join(", ")+'</div><div class="nw-count">'+nt.length+'</div></div>';}}
+    if(nt.length){hasN=true;h+='<div class="nw-row" data-wds="'+nds+'" style="cursor:pointer"><div class="nw-day">'+DN[nw.getDay()]+' '+nw.getDate()+'</div><div class="nw-tasks">'+nt.map(function(t){return es(t.name);}).join(", ")+'</div><div class="nw-count">'+nt.length+'</div></div>';}}
   if(!hasN)h+='<div class="empty">No tasks next week</div>';
   h+='</div>';
   // Month
@@ -566,6 +567,8 @@ function rDash(el,titleHtml){
   h+='<div class="quote">"'+QUOTES[doy%QUOTES.length]+'"</div>';
   h+='</div></div>';
   el.innerHTML=h;
+  // Week grid click → navigate to that day
+  el.querySelectorAll("[data-wds]").forEach(function(d){d.onclick=function(){CD=mk(this.dataset.wds);LD="";currentPage="today";renderPage();};});
 }
 
 // TODAY
@@ -672,12 +675,21 @@ function rTasks(el){
   var active=(UD.tasks||[]).filter(function(t){return!t.archived;}),arc=UD.archivedTasks||[];
   var h='<div class="card"><div class="card-t">Import from Excel</div><div class="import-zone" id="tmIZ"><div style="font-size:24px">&#128196;</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Tap to upload .xlsx</div><input type="file" accept=".xlsx,.xls,.csv" style="display:none" id="tmFI"></div></div>';
   h+='<div class="card"><div class="card-t">Add New Task</div><label style="margin-top:0">Task Name</label><input id="tmN" placeholder="e.g. GYM, English Practice..."><label>Description</label><input id="tmD" placeholder="Optional"><label>Time</label><input id="tmT" placeholder="e.g. 19:30 – 20:30"><label>Which days?</label><div class="day-pills" id="tmDP"></div><label>Track a number?</label><input id="tmNL" placeholder="Optional"><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="tmA">+ Add Task</button></div></div>';
-  h+='<div class="card"><div class="card-t">Active Tasks ('+active.length+')</div>';
+  h+='<div class="card"><div class="card-t" style="display:flex;align-items:center;justify-content:space-between">Active Tasks ('+active.length+')<button class="btn btn-warm btn-sm" id="gcalAll" style="font-size:10px">&#128197; Add All to Google Calendar</button></div>';
   if(!active.length)h+='<div class="empty">No active tasks</div>';
-  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
+  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><a href="'+gcalUrl(t,td())+'" target="_blank" title="Add to Google Calendar" style="font-size:15px;text-decoration:none;padding:6px;border-radius:8px;border:1px solid transparent;transition:all .15s">&#128197;</a><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
   h+='</div>';
   if(arc.length){h+='<div class="card"><div class="card-t">Archived ('+arc.length+')</div>';for(var i=0;i<arc.length;i++){var t=arc[i];h+='<div class="task-item archived"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+'</div></div><div class="task-actions"><button class="tm-r" data-t="'+t.id+'" title="Restore">&#128260;</button></div></div>';}h+='</div>';}
   el.innerHTML=h;
+  // Add All to Google Calendar
+  var gcBtn=document.getElementById("gcalAll");
+  if(gcBtn)gcBtn.onclick=function(){
+    var withTime=active.filter(function(t){return t.time;});
+    if(!withTime.length){ts("No tasks with time set");return;}
+    if(!confirm("Open "+withTime.length+" Google Calendar tabs?\nEach will have name, time & weekly recurrence pre-filled.\nJust hit Save in each tab."))return;
+    for(var i=0;i<withTime.length;i++){(function(idx){setTimeout(function(){window.open(gcalUrl(withTime[idx],td()),"_blank");},idx*700);})(i);}
+    ts("Opening "+withTime.length+" events...");
+  };
   var iz=document.getElementById("tmIZ"),fi=document.getElementById("tmFI");if(iz)iz.onclick=function(){fi.click();};if(fi)fi.onchange=function(){if(fi.files.length)handleImport(fi.files[0],false);};
   var sD=[],dp=document.getElementById("tmDP");if(dp)buildDayPills(dp,sD);
   var ab=document.getElementById("tmA");if(ab)ab.onclick=function(){var n=(document.getElementById("tmN").value||"").trim();if(!n){ts("Enter name");return;}if(!sD.length){ts("Select days");return;}var d=(document.getElementById("tmD").value||"").trim(),nl=(document.getElementById("tmNL").value||"").trim(),tm=(document.getElementById("tmT").value||"").trim();UD.tasks.push({id:"t_"+Date.now(),name:n,desc:d,time:tm,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});saveUD(function(){ts("Task added!");rTasks(el);});};
