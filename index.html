@@ -345,16 +345,16 @@ function showOnboarding(){
   var root=document.getElementById("root");
   var h='<div class="onboard"><div class="ob-step">Setup</div><div class="ob-title">Create your daily habits</div><div class="ob-sub">Add tasks and pick which days they appear. You can always edit later.</div>';
   h+='<div class="card"><label style="margin-top:0">Your Name</label><input id="obName" placeholder="Your name" value="'+(U.displayName||"")+'"></div>';
-  h+='<div class="card"><div class="card-t">Add a Task</div><label style="margin-top:0">Task Name</label><input id="atName" placeholder="e.g. GYM, BIM Study..."><label>Description (optional)</label><input id="atDesc" placeholder="Brief description"><label>Which days?</label><div class="day-pills" id="obDP"></div><label>Track a number? (optional)</label><input id="atNum" placeholder="e.g. Pages read..."><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="atAdd">+ Add Task</button></div></div>';
+  h+='<div class="card"><div class="card-t">Add a Task</div><label style="margin-top:0">Task Name</label><input id="atName" placeholder="e.g. GYM, BIM Study..."><label>Description (optional)</label><input id="atDesc" placeholder="Brief description"><label>Time (optional)</label><input id="atTime" placeholder="e.g. 19:30 – 20:30"><label>Which days?</label><div class="day-pills" id="obDP"></div><label>Track a number? (optional)</label><input id="atNum" placeholder="e.g. Pages read..."><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="atAdd">+ Add Task</button></div></div>';
   h+='<div class="card"><div class="card-t">Import from Excel</div><div class="import-zone" id="obIZ"><div style="font-size:28px">&#128196;</div><div style="font-size:12px;color:var(--text3);margin-top:6px">Tap to upload .xlsx file</div><input type="file" accept=".xlsx,.xls,.csv" style="display:none" id="obFI"></div></div>';
   h+='<div class="card"><div class="card-t">Your Tasks ('+obTasks.length+')</div><div id="obL">';
   if(!obTasks.length)h+='<div class="empty">No tasks yet</div>';
-  for(var i=0;i<obTasks.length;i++){var t=obTasks[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+'</div></div><div class="task-actions"><button class="ob-del" data-i="'+i+'">&#128465;</button></div></div>';}
+  for(var i=0;i<obTasks.length;i++){var t=obTasks[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div></div><div class="task-actions"><button class="ob-del" data-i="'+i+'">&#128465;</button></div></div>';}
   h+='</div></div>';
   h+='<button class="btn btn-primary btn-full" id="obDone"'+(obTasks.length?'':' disabled')+'>Start Tracking</button></div>';
   root.innerHTML=h;
   var sD=[];var dp=document.getElementById("obDP");buildDayPills(dp,sD);
-  document.getElementById("atAdd").onclick=function(){var n=document.getElementById("atName").value.trim();if(!n){ts("Enter task name");return;}if(!sD.length){ts("Select days");return;}var d=document.getElementById("atDesc").value.trim(),nl=document.getElementById("atNum").value.trim();obTasks.push({id:"t_"+Date.now()+"_"+obTasks.length,name:n,desc:d,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});showOnboarding();};
+  document.getElementById("atAdd").onclick=function(){var n=document.getElementById("atName").value.trim();if(!n){ts("Enter task name");return;}if(!sD.length){ts("Select days");return;}var d=document.getElementById("atDesc").value.trim(),nl=document.getElementById("atNum").value.trim(),tm=(document.getElementById("atTime").value||"").trim();obTasks.push({id:"t_"+Date.now()+"_"+obTasks.length,name:n,desc:d,time:tm,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});showOnboarding();};
   var iz=document.getElementById("obIZ"),fi=document.getElementById("obFI");iz.onclick=function(){fi.click();};fi.onchange=function(){if(fi.files.length)handleImport(fi.files[0],true);};
   document.querySelectorAll(".ob-del").forEach(function(b){b.onclick=function(e){e.stopPropagation();obTasks.splice(parseInt(this.dataset.i),1);showOnboarding();};});
   document.getElementById("obDone").onclick=function(){if(!obTasks.length){ts("Add at least 1 task");return;}this.disabled=true;this.textContent="Setting up...";var n=document.getElementById("obName").value.trim()||U.displayName||"User";var ud={name:n,email:U.email,photo:U.photoURL,tasks:obTasks,archivedTasks:[],onboarded:true,created:firebase.firestore.FieldValue.serverTimestamp()};db.collection("users").doc(U.uid).set(ud).then(function(){UD=ud;showApp();}).catch(function(e){ts("Error: "+e.message);});};
@@ -362,10 +362,125 @@ function showOnboarding(){
 
 // IMPORT
 function handleImport(file,isOb){
-  var reader=new FileReader();reader.onload=function(e){try{var d=new Uint8Array(e.target.result),wb=XLSX.read(d,{type:"array"}),habits=[],ws=wb.Sheets[wb.SheetNames[0]];
-  for(var r=10;r<=26;r++){var c=ws[XLSX.utils.encode_cell({r:r,c:1})];if(c&&c.v&&typeof c.v==="string"&&c.v.trim())habits.push(c.v.trim());}
-  if(!habits.length){var rng=XLSX.utils.decode_range(ws["!ref"]||"A1");for(var r=0;r<=rng.e.r;r++){var c=ws[XLSX.utils.encode_cell({r:r,c:0})];if(c&&c.v&&typeof c.v==="string"&&c.v.trim()&&c.v!=="HABITS")habits.push(c.v.trim());}}
-  if(!habits.length){ts("No habits found");return;}showImportMap(habits,isOb);}catch(err){ts("Error: "+err.message);}};reader.readAsArrayBuffer(file);
+  var reader=new FileReader();reader.onload=function(e){try{
+    var d=new Uint8Array(e.target.result),wb=XLSX.read(d,{type:"array"});
+    // Strategy: detect schedule format (sheets named Mon/Tue/etc with TIME,TASK,DESCRIPTION columns)
+    var daySheetMap={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:0,Monday:1,Tuesday:2,Wednesday:3,Thursday:4,Friday:5,Saturday:6,Sunday:0};
+    var foundTasks={};// key=taskName, value={name,desc,time,days:[]}
+    var hasScheduleSheets=false;
+    
+    for(var si=0;si<wb.SheetNames.length;si++){
+      var sn=wb.SheetNames[si];
+      var dayNum=daySheetMap[sn];
+      if(dayNum===undefined) continue;
+      hasScheduleSheets=true;
+      var ws=wb.Sheets[sn];
+      if(!ws["!ref"]) continue;
+      var rng=XLSX.utils.decode_range(ws["!ref"]);
+      
+      // Find header row (look for TIME or TASK in first 10 rows)
+      var hdrRow=-1,colTime=-1,colTask=-1,colDesc=-1,colCat=-1;
+      for(var r=0;r<=Math.min(rng.e.r,10);r++){
+        for(var c=0;c<=rng.e.c;c++){
+          var cell=ws[XLSX.utils.encode_cell({r:r,c:c})];
+          if(!cell||!cell.v) continue;
+          var v=String(cell.v).trim().toUpperCase();
+          if(v==="TIME"){hdrRow=r;colTime=c;}
+          if(v==="TASK"){hdrRow=r;colTask=c;}
+          if(v==="DESCRIPTION"||v==="DETAILS"){colDesc=c;}
+          if(v==="CATEGORY"){colCat=c;}
+        }
+        if(hdrRow>=0) break;
+      }
+      if(colTask===-1) colTask=1;// fallback column B
+      if(colTime===-1) colTime=0;// fallback column A
+      if(colDesc===-1) colDesc=2;// fallback column C
+      
+      // Read tasks from rows after header
+      var startRow=(hdrRow>=0)?hdrRow+1:4;
+      for(var r=startRow;r<=rng.e.r;r++){
+        var taskCell=ws[XLSX.utils.encode_cell({r:r,c:colTask})];
+        if(!taskCell||!taskCell.v) continue;
+        var taskName=String(taskCell.v).trim();
+        if(!taskName) continue;
+        // Skip section headers (FIXED MORNING BLOCK, EVENING BLOCK, etc)
+        var upper=taskName.toUpperCase();
+        if(upper.indexOf("FIXED")===0||upper.indexOf("EVENING")===0||upper.indexOf("MORNING")===0) continue;
+        // Skip non-task rows (merged cells with section titles)
+        if(taskName.length>80) continue;
+        
+        var timeCell=ws[XLSX.utils.encode_cell({r:r,c:colTime})];
+        var descCell=ws[XLSX.utils.encode_cell({r:r,c:colDesc})];
+        var timeVal=timeCell&&timeCell.v?String(timeCell.v).trim():"";
+        var descVal=descCell&&descCell.v?String(descCell.v).trim():"";
+        
+        // Deduplicate: same task name across days gets merged
+        var key=taskName.replace(/\s+/g," ");
+        if(!foundTasks[key]){
+          foundTasks[key]={name:taskName,desc:descVal,time:timeVal,days:[]};
+        }
+        if(foundTasks[key].days.indexOf(dayNum)===-1){
+          foundTasks[key].days.push(dayNum);
+        }
+        // Keep longest description
+        if(descVal.length>foundTasks[key].desc.length){
+          foundTasks[key].desc=descVal;
+        }
+      }
+    }
+    
+    if(hasScheduleSheets){
+      var taskList=[];
+      for(var k in foundTasks) taskList.push(foundTasks[k]);
+      if(!taskList.length){ts("No tasks found in day sheets");return;}
+      showImportPreview(taskList,isOb);
+      return;
+    }
+    
+    // Fallback: old habit tracker format (column B, rows 11-27 of first sheet)
+    var habits=[],ws=wb.Sheets[wb.SheetNames[0]];
+    for(var r=10;r<=26;r++){var c=ws[XLSX.utils.encode_cell({r:r,c:1})];if(c&&c.v&&typeof c.v==="string"&&c.v.trim())habits.push(c.v.trim());}
+    if(!habits.length){var rng2=XLSX.utils.decode_range(ws["!ref"]||"A1");for(var r=0;r<=rng2.e.r;r++){var c=ws[XLSX.utils.encode_cell({r:r,c:0})];if(c&&c.v&&typeof c.v==="string"&&c.v.trim()&&c.v!=="HABITS")habits.push(c.v.trim());}}
+    if(!habits.length){ts("No tasks found");return;}
+    showImportMap(habits,isOb);
+  }catch(err){ts("Error: "+err.message);}};reader.readAsArrayBuffer(file);
+}
+
+// New: preview imported tasks with auto-detected days, time, description
+function showImportPreview(taskList,isOb){
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal";
+  var h='<div class="modal-title"><span>Import Preview</span><button class="modal-close" id="ipC">&#10005;</button></div>';
+  h+='<div style="font-size:12px;color:var(--text3);margin-bottom:16px">Found '+taskList.length+' tasks with days auto-detected. Review and import.</div>';
+  
+  for(var i=0;i<taskList.length;i++){
+    var t=taskList[i];
+    h+='<div class="import-row" style="flex-direction:column;align-items:stretch;gap:6px">';
+    h+='<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" checked data-ii="'+i+'" class="ip-chk" style="width:auto;flex-shrink:0"> <div class="ir-name">'+es(t.name)+'</div></div>';
+    if(t.time) h+='<div style="font-size:10px;color:var(--accent);font-family:Consolas,monospace">&#128337; '+es(t.time)+'</div>';
+    if(t.desc) h+='<div style="font-size:11px;color:var(--text3);line-height:1.3">'+es(t.desc)+'</div>';
+    h+='<div style="font-size:10px;color:var(--accent);font-weight:600">'+getDL(t.days)+'</div>';
+    h+='</div>';
+  }
+  h+='<button class="btn btn-primary btn-full" id="ipD" style="margin-top:14px">Import Selected Tasks</button>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  
+  document.getElementById("ipC").onclick=function(){document.body.removeChild(ov);};
+  ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
+  
+  document.getElementById("ipD").onclick=function(){
+    var imp=[];
+    var chks=ov.querySelectorAll(".ip-chk");
+    for(var i=0;i<chks.length;i++){
+      if(!chks[i].checked) continue;
+      var idx=parseInt(chks[i].dataset.ii);
+      var t=taskList[idx];
+      imp.push({id:"t_"+Date.now()+"_"+i,name:t.name,desc:t.desc||"",time:t.time||"",days:t.days.sort(),numId:"",numLabel:"",startDate:td()});
+    }
+    if(!imp.length){ts("Select at least 1 task");return;}
+    document.body.removeChild(ov);
+    if(isOb){obTasks=obTasks.concat(imp);showOnboarding();}
+    else{UD.tasks=UD.tasks.concat(imp);saveUD(function(){ts(imp.length+" tasks imported!");renderPage();});}
+  };
 }
 
 function showImportMap(habits,isOb){
@@ -424,7 +539,7 @@ function rDash(el,titleHtml){
   h+='<div class="card card-warm"><div class="card-t">Today — '+now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"})+'</div>';
   if(!tasks.length)h+='<div class="empty">No tasks today</div>';
   else{h+='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">'+tasks.length+' tasks scheduled</div>';
-    for(var i=0;i<tasks.length;i++)h+='<div style="font-size:13px;padding:3px 0;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></span>'+es(tasks[i].name)+'</div>';
+    for(var i=0;i<tasks.length;i++){var tt=tasks[i];h+='<div style="font-size:13px;padding:3px 0;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></span>'+es(tt.name)+(tt.time?' <span style="font-size:10px;color:var(--text3);font-family:Consolas,monospace">'+es(tt.time)+'</span>':'')+'</div>';}
     h+='<div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="currentPage=\'today\';renderPage();">Fill Today\'s Tasks &#8250;</button></div>';}
   h+='</div>';
   // Week
@@ -466,6 +581,7 @@ function bToday(el,ds,it,fu){
   else{h+='<div class="card"><div class="card-t">Tasks ('+tasks.length+')</div>';
     for(var i=0;i<tasks.length;i++){var t=tasks[i],on=!!PD[t.id];
       h+='<div class="rw'+(on?" done":"")+'" data-tid="'+t.id+'"><div class="ck'+(on?" on":"")+'">&#10003;</div><div style="flex:1"><div class="tn">'+es(t.name)+'<span class="freq-tag">'+getDL(t.days)+'</span></div>';
+      if(t.time) h+='<div class="td2" style="color:var(--accent);font-family:Consolas,monospace;font-size:10px">&#128337; '+es(t.time)+'</div>';
       if(t.desc)h+='<div class="td2">'+es(t.desc)+'</div>';
       if(t.numId){var v=PD[t.numId]||0;h+='<div class="nb" data-stop="1"><span>'+es(t.numLabel)+'</span><input type="number" min="0" value="'+v+'" data-nid="'+t.numId+'"'+(locked?" disabled":"")+'></div>';}
       h+='</div></div>';}h+='</div>';}
@@ -516,16 +632,16 @@ function dlX(y,m){var rows=window._rr;if(!rows||!rows.length){ts("No data");retu
 function rTasks(el){
   var active=(UD.tasks||[]).filter(function(t){return!t.archived;}),arc=UD.archivedTasks||[];
   var h='<div class="card"><div class="card-t">Import from Excel</div><div class="import-zone" id="tmIZ"><div style="font-size:24px">&#128196;</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Tap to upload .xlsx</div><input type="file" accept=".xlsx,.xls,.csv" style="display:none" id="tmFI"></div></div>';
-  h+='<div class="card"><div class="card-t">Add New Task</div><label style="margin-top:0">Task Name</label><input id="tmN" placeholder="e.g. GYM, English Practice..."><label>Description</label><input id="tmD" placeholder="Optional"><label>Which days?</label><div class="day-pills" id="tmDP"></div><label>Track a number?</label><input id="tmNL" placeholder="Optional"><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="tmA">+ Add Task</button></div></div>';
+  h+='<div class="card"><div class="card-t">Add New Task</div><label style="margin-top:0">Task Name</label><input id="tmN" placeholder="e.g. GYM, English Practice..."><label>Description</label><input id="tmD" placeholder="Optional"><label>Time</label><input id="tmT" placeholder="e.g. 19:30 – 20:30"><label>Which days?</label><div class="day-pills" id="tmDP"></div><label>Track a number?</label><input id="tmNL" placeholder="Optional"><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="tmA">+ Add Task</button></div></div>';
   h+='<div class="card"><div class="card-t">Active Tasks ('+active.length+')</div>';
   if(!active.length)h+='<div class="empty">No active tasks</div>';
-  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
+  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
   h+='</div>';
   if(arc.length){h+='<div class="card"><div class="card-t">Archived ('+arc.length+')</div>';for(var i=0;i<arc.length;i++){var t=arc[i];h+='<div class="task-item archived"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+'</div></div><div class="task-actions"><button class="tm-r" data-t="'+t.id+'" title="Restore">&#128260;</button></div></div>';}h+='</div>';}
   el.innerHTML=h;
   var iz=document.getElementById("tmIZ"),fi=document.getElementById("tmFI");if(iz)iz.onclick=function(){fi.click();};if(fi)fi.onchange=function(){if(fi.files.length)handleImport(fi.files[0],false);};
   var sD=[],dp=document.getElementById("tmDP");if(dp)buildDayPills(dp,sD);
-  var ab=document.getElementById("tmA");if(ab)ab.onclick=function(){var n=(document.getElementById("tmN").value||"").trim();if(!n){ts("Enter name");return;}if(!sD.length){ts("Select days");return;}var d=(document.getElementById("tmD").value||"").trim(),nl=(document.getElementById("tmNL").value||"").trim();UD.tasks.push({id:"t_"+Date.now(),name:n,desc:d,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});saveUD(function(){ts("Task added!");rTasks(el);});};
+  var ab=document.getElementById("tmA");if(ab)ab.onclick=function(){var n=(document.getElementById("tmN").value||"").trim();if(!n){ts("Enter name");return;}if(!sD.length){ts("Select days");return;}var d=(document.getElementById("tmD").value||"").trim(),nl=(document.getElementById("tmNL").value||"").trim(),tm=(document.getElementById("tmT").value||"").trim();UD.tasks.push({id:"t_"+Date.now(),name:n,desc:d,time:tm,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});saveUD(function(){ts("Task added!");rTasks(el);});};
   el.querySelectorAll(".tm-e").forEach(function(b){b.onclick=function(e){e.stopPropagation();showEdit(this.dataset.t,el);};});
   el.querySelectorAll(".tm-a").forEach(function(b){b.onclick=function(e){e.stopPropagation();var tid=this.dataset.t;if(!confirm("Archive? Removed from daily but kept in reports."))return;var idx=-1;for(var i=0;i<UD.tasks.length;i++)if(UD.tasks[i].id===tid){idx=i;break;}if(idx===-1)return;var t=UD.tasks.splice(idx,1)[0];t.archivedDate=td();UD.archivedTasks.push(t);saveUD(function(){ts("Archived");rTasks(el);});};});
   el.querySelectorAll(".tm-d").forEach(function(b){b.onclick=function(e){e.stopPropagation();var tid=this.dataset.t;if(!confirm("Delete permanently? History will be lost."))return;UD.tasks=UD.tasks.filter(function(t){return t.id!==tid;});saveUD(function(){ts("Deleted");rTasks(el);});};});
@@ -538,6 +654,7 @@ function showEdit(tid,pEl){
   var h='<div class="modal-title"><span>Edit Task</span><button class="modal-close" id="emC">&#10005;</button></div>';
   h+='<label style="margin-top:0">Task Name</label><input id="emN" value="'+es(task.name)+'">';
   h+='<label>Description</label><input id="emD" value="'+(task.desc?es(task.desc):"")+'">';
+  h+='<label>Time</label><input id="emT" value="'+(task.time?es(task.time):"")+'" placeholder="e.g. 19:30 – 20:30">';
   h+='<label>Which days?</label><div class="day-pills" id="emDP"></div>';
   if(task.numId)h+='<label>Number Label</label><input id="emNL" value="'+(task.numLabel?es(task.numLabel):"")+'">';
   h+='<div style="margin-top:18px"><button class="btn btn-primary btn-full" id="emS">Save Changes</button></div>';
@@ -546,7 +663,7 @@ function showEdit(tid,pEl){
   buildDayPills(dp,eD,eD.slice());
   document.getElementById("emC").onclick=function(){document.body.removeChild(ov);};
   ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
-  document.getElementById("emS").onclick=function(){var n=(document.getElementById("emN").value||"").trim();if(!n){ts("Enter name");return;}if(!eD.length){ts("Select days");return;}task.name=n;task.desc=(document.getElementById("emD").value||"").trim();task.days=eD.sort();if(task.numId){var nl=document.getElementById("emNL");if(nl)task.numLabel=nl.value.trim();}document.body.removeChild(ov);saveUD(function(){ts("Updated");rTasks(pEl);});};
+  document.getElementById("emS").onclick=function(){var n=(document.getElementById("emN").value||"").trim();if(!n){ts("Enter name");return;}if(!eD.length){ts("Select days");return;}task.name=n;task.desc=(document.getElementById("emD").value||"").trim();task.time=(document.getElementById("emT").value||"").trim();task.days=eD.sort();if(task.numId){var nl=document.getElementById("emNL");if(nl)task.numLabel=nl.value.trim();}document.body.removeChild(ov);saveUD(function(){ts("Updated");rTasks(pEl);});};
 }
 
 // REWARDS
