@@ -604,12 +604,28 @@ function gcalUrl(task,dateStr){
   var title=encodeURIComponent(task.name);
   var desc=encodeURIComponent(task.desc||"");
   var base="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+title+"&details="+desc;
+  // Find the correct start date: next day that matches task.days
+  var startDate=dateStr;
+  if(task.days&&task.days.length>0){
+    var dt=mk(dateStr);
+    // Check if today matches, if not find next matching day
+    var found=false;
+    for(var attempt=0;attempt<7;attempt++){
+      var checkDate=new Date(dt);
+      checkDate.setDate(dt.getDate()+attempt);
+      if(task.days.indexOf(checkDate.getDay())!==-1){
+        startDate=fm(checkDate);
+        found=true;
+        break;
+      }
+    }
+  }
   if(task.time){
     var parts=task.time.replace(/–/g,"-").split("-").map(function(s){return s.trim();});
     if(parts.length===2){
       var s=parts[0].replace(/[^0-9:]/g,""),e=parts[1].replace(/[^0-9:]/g,"");
       if(s&&e){
-        var d=dateStr.replace(/-/g,"");
+        var d=startDate.replace(/-/g,"");
         var st=d+"T"+s.replace(":","")+"00";
         var et=d+"T"+e.replace(":","")+"00";
         base+="&dates="+st+"/"+et;
