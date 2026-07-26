@@ -571,23 +571,28 @@ function rDash(el,titleHtml){
 // TODAY
 function rToday(el){var ds=fm(CD),it=ds===td(),fu=CD>new Date();if(ds!==LD){LD=ds;ld(ds,function(o){PD=o;bToday(el,ds,it,fu);});}else bToday(el,ds,it,fu);}
 function gcalUrl(task,dateStr){
-  // Generate Google Calendar event creation URL
   var title=encodeURIComponent(task.name);
   var desc=encodeURIComponent(task.desc||"");
   var base="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+title+"&details="+desc;
-  // Parse time if available (format: "19:30 – 20:30" or "19:30 - 20:30")
   if(task.time){
     var parts=task.time.replace(/–/g,"-").split("-").map(function(s){return s.trim();});
     if(parts.length===2){
       var s=parts[0].replace(/[^0-9:]/g,""),e=parts[1].replace(/[^0-9:]/g,"");
       if(s&&e){
-        // Build date-time strings YYYYMMDDTHHMMSS
         var d=dateStr.replace(/-/g,"");
         var st=d+"T"+s.replace(":","")+"00";
         var et=d+"T"+e.replace(":","")+"00";
         base+="&dates="+st+"/"+et;
       }
     }
+  }
+  // Add recurrence based on task days
+  if(task.days&&task.days.length>0&&task.days.length<7){
+    var dayMap={0:"SU",1:"MO",2:"TU",3:"WE",4:"TH",5:"FR",6:"SA"};
+    var byDay=task.days.map(function(d){return dayMap[d];}).join(",");
+    base+="&recur=RRULE:FREQ%3DWEEKLY%3BBYDAY%3D"+byDay;
+  } else if(task.days&&task.days.length===7){
+    base+="&recur=RRULE:FREQ%3DDAILY";
   }
   return base;
 }
@@ -598,7 +603,7 @@ function bToday(el,ds,it,fu){
   var locked=!it;
   var h='<div class="dn"><button id="dp">&#8249;</button><div style="text-align:center"><div class="dn-label">'+dl+dot+'</div><div class="dn-sub">'+(it?"Today":"")+'</div></div><button id="dnn">&#8250;</button></div>';
   if(locked&&!fu)h+='<div class="locked-msg">&#128274; Past day — view only</div>';
-  if(fu)h+='<div class="locked-msg">Future date — come back on this day</div>';
+  if(fu)h+='<div class="locked-msg">&#128338; Upcoming — '+tasks.length+' task'+(tasks.length!==1?'s':'')+' scheduled</div>';
   if(!tasks.length)h+='<div class="card"><div class="empty">No tasks for this day</div></div>';
   else{h+='<div class="card"><div class="card-t">Tasks ('+tasks.length+')</div>';
     for(var i=0;i<tasks.length;i++){var t=tasks[i],on=!!PD[t.id];
@@ -642,7 +647,7 @@ function rCal(el){
   document.getElementById("cmp").onclick=function(){CM.setMonth(CM.getMonth()-1);rCal(el);};
   document.getElementById("cmn").onclick=function(){CM.setMonth(CM.getMonth()+1);rCal(el);};
   for(var d=1;d<=dim;d++)(function(d){var ds=y+"-"+pad(m+1)+"-"+pad(d),dt=new Date(y,m,d);if(dt>now)return;ld(ds,function(o){var ce=document.getElementById("cd"+d);if(!ce)return;if(ds===td())ce.classList.add("now");var c=cntDone(o,ds);if(c.done>0&&c.done===c.total)ce.classList.add("pf");else if(c.done>0)ce.classList.add("pt");});})(d);
-  el.querySelectorAll("[data-cd]").forEach(function(c){c.onclick=function(){var ds=this.dataset.cd;if(mk(ds)>new Date())return;CD=mk(ds);LD="";currentPage="today";renderPage();};});
+  el.querySelectorAll("[data-cd]").forEach(function(c){c.onclick=function(){var ds=this.dataset.cd;CD=mk(ds);LD="";currentPage="today";renderPage();};});
   lRep(y,m);document.getElementById("rdl").onclick=function(){dlX(y,m);};
 }
 function showDtl(ds,obj){var tasks=getAllTasksForDate(ds),c=cntDone(obj,ds),dl=mk(ds).toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"}),pct=c.total?Math.round(c.done/c.total*100):0;
