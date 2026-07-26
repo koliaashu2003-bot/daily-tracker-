@@ -507,10 +507,10 @@ function showApp(){
   var bn=document.createElement("div");bn.className="bnav";bn.id="bnav";
   bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
   document.body.appendChild(bn);
-  bn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;renderPage();};
+  bn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
   // Sidebar nav
   var sn=document.getElementById("snav");
-  if(sn)sn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;renderPage();};
+  if(sn)sn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
   var lob=document.getElementById("lob");if(lob)lob.onclick=function(){if(confirm("Sign out?"))au.signOut();};
   var lob2=document.getElementById("lob2");if(lob2)lob2.onclick=function(){if(confirm("Sign out?"))au.signOut();};
   currentPage="dashboard";renderPage();cS();
@@ -525,7 +525,7 @@ function renderPage(){
   var titles={dashboard:"Dashboard",today:"Today",calendar:"Calendar",tasks:"Manage Tasks",rewards:"Rewards"};
   var titleHtml='<div class="page-title">'+(titles[currentPage]||"")+'</div>';
   if(currentPage==="dashboard")rDash(pc,titleHtml);
-  else if(currentPage==="today"){CD=new Date();LD="";pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rToday(sub);}
+  else if(currentPage==="today"){LD="";pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rToday(sub);}
   else if(currentPage==="calendar"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rCal(sub);}
   else if(currentPage==="tasks"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rTasks(sub);}
   else if(currentPage==="rewards"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rRew(sub);}
@@ -570,6 +570,28 @@ function rDash(el,titleHtml){
 
 // TODAY
 function rToday(el){var ds=fm(CD),it=ds===td(),fu=CD>new Date();if(ds!==LD){LD=ds;ld(ds,function(o){PD=o;bToday(el,ds,it,fu);});}else bToday(el,ds,it,fu);}
+function gcalUrl(task,dateStr){
+  // Generate Google Calendar event creation URL
+  var title=encodeURIComponent(task.name);
+  var desc=encodeURIComponent(task.desc||"");
+  var base="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+title+"&details="+desc;
+  // Parse time if available (format: "19:30 – 20:30" or "19:30 - 20:30")
+  if(task.time){
+    var parts=task.time.replace(/–/g,"-").split("-").map(function(s){return s.trim();});
+    if(parts.length===2){
+      var s=parts[0].replace(/[^0-9:]/g,""),e=parts[1].replace(/[^0-9:]/g,"");
+      if(s&&e){
+        // Build date-time strings YYYYMMDDTHHMMSS
+        var d=dateStr.replace(/-/g,"");
+        var st=d+"T"+s.replace(":","")+"00";
+        var et=d+"T"+e.replace(":","")+"00";
+        base+="&dates="+st+"/"+et;
+      }
+    }
+  }
+  return base;
+}
+
 function bToday(el,ds,it,fu){
   var tasks=getTasksForDate(ds),dl=CD.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"});
   var dot=it?' <span style="display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;vertical-align:middle"></span>':"";
@@ -584,14 +606,26 @@ function bToday(el,ds,it,fu){
       if(t.time) h+='<div class="td2" style="color:var(--accent);font-family:Consolas,monospace;font-size:10px">&#128337; '+es(t.time)+'</div>';
       if(t.desc)h+='<div class="td2">'+es(t.desc)+'</div>';
       if(t.numId){var v=PD[t.numId]||0;h+='<div class="nb" data-stop="1"><span>'+es(t.numLabel)+'</span><input type="number" min="0" value="'+v+'" data-nid="'+t.numId+'"'+(locked?" disabled":"")+'></div>';}
-      h+='</div></div>';}h+='</div>';}
-  if(it)h+='<div class="sub-wrap"><button class="sub-btn" id="sbtn">Submit Progress</button></div>';
+      h+='</div><a href="'+gcalUrl(t,ds)+'" target="_blank" data-stop="1" title="Add to Google Calendar" style="font-size:16px;text-decoration:none;padding:4px;flex-shrink:0;opacity:.4;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.4">&#128197;</a></div>';}h+='</div>';}
+  if(it)h+='<div class="sub-wrap" id="autoSaveBar" style="display:none"><div class="sub-btn saved" style="pointer-events:none;font-size:13px">&#10003; Auto-saved</div></div>';
   el.innerHTML=h;
   document.getElementById("dp").onclick=function(){CD.setDate(CD.getDate()-1);LD="";rToday(el);};
   document.getElementById("dnn").onclick=function(){CD.setDate(CD.getDate()+1);LD="";rToday(el);};
-  if(!locked&&!fu){el.querySelectorAll("[data-tid]").forEach(function(r){r.addEventListener("click",function(e){if(e.target.closest("[data-stop]"))return;PD[this.dataset.tid]=!PD[this.dataset.tid];bToday(el,ds,it,fu);});});
-    el.querySelectorAll("[data-nid]").forEach(function(n){n.addEventListener("change",function(){PD[this.dataset.nid]=parseInt(this.value)||0;});});}
-  var sb=document.getElementById("sbtn");if(sb)sb.onclick=function(){sb.disabled=true;sb.textContent="Saving...";sv(ds,PD,function(){var c=cntDone(PD,ds);sb.textContent="Saved! "+c.done+"/"+c.total;sb.classList.add("saved");ts("Progress saved!");cS();setTimeout(function(){sb.textContent="Submit Progress";sb.classList.remove("saved");sb.disabled=false;},3000);});};
+  if(!locked&&!fu){
+    var saveTimer=null;
+    function autoSave(){
+      if(saveTimer)clearTimeout(saveTimer);
+      saveTimer=setTimeout(function(){
+        sv(ds,PD,function(){
+          var bar=document.getElementById("autoSaveBar");
+          if(bar){bar.style.display="";setTimeout(function(){bar.style.display="none";},2000);}
+          cS();
+        });
+      },500);
+    }
+    el.querySelectorAll("[data-tid]").forEach(function(r){r.addEventListener("click",function(e){if(e.target.closest("[data-stop]"))return;PD[this.dataset.tid]=!PD[this.dataset.tid];bToday(el,ds,it,fu);autoSave();});});
+    el.querySelectorAll("[data-nid]").forEach(function(n){n.addEventListener("change",function(){PD[this.dataset.nid]=parseInt(this.value)||0;autoSave();});});
+  }
 }
 
 // CALENDAR
@@ -608,7 +642,7 @@ function rCal(el){
   document.getElementById("cmp").onclick=function(){CM.setMonth(CM.getMonth()-1);rCal(el);};
   document.getElementById("cmn").onclick=function(){CM.setMonth(CM.getMonth()+1);rCal(el);};
   for(var d=1;d<=dim;d++)(function(d){var ds=y+"-"+pad(m+1)+"-"+pad(d),dt=new Date(y,m,d);if(dt>now)return;ld(ds,function(o){var ce=document.getElementById("cd"+d);if(!ce)return;if(ds===td())ce.classList.add("now");var c=cntDone(o,ds);if(c.done>0&&c.done===c.total)ce.classList.add("pf");else if(c.done>0)ce.classList.add("pt");});})(d);
-  el.querySelectorAll("[data-cd]").forEach(function(c){c.onclick=function(){var ds=this.dataset.cd;if(mk(ds)>new Date())return;ld(ds,function(o){showDtl(ds,o);});};});
+  el.querySelectorAll("[data-cd]").forEach(function(c){c.onclick=function(){var ds=this.dataset.cd;if(mk(ds)>new Date())return;CD=mk(ds);LD="";currentPage="today";renderPage();};});
   lRep(y,m);document.getElementById("rdl").onclick=function(){dlX(y,m);};
 }
 function showDtl(ds,obj){var tasks=getAllTasksForDate(ds),c=cntDone(obj,ds),dl=mk(ds).toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"}),pct=c.total?Math.round(c.done/c.total*100):0;
