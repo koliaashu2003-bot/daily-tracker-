@@ -548,16 +548,16 @@ function rDash(el,titleHtml){
   var sow=new Date(now);sow.setDate(now.getDate()-now.getDay());
   for(var i=0;i<7;i++){var wd=new Date(sow);wd.setDate(sow.getDate()+i);var wds=fm(wd),wt=getTasksForDate(wds);
     h+='<div class="week-day'+(wds===ds?" today":"")+'" data-wds="'+wds+'"><div class="wd-name">'+DN[i]+'</div><div class="wd-date">'+wd.getDate()+'</div><div class="wd-count">'+wt.length+'</div></div>';}
-  h+='</div></div>';
+  h+='</div><div id="weekPreview"></div></div>';
   h+='</div><div class="dash-right">';
   // Next week
   h+='<div class="card"><div class="card-t">Next Week</div>';
   var nm2=new Date(now);nm2.setDate(now.getDate()+(7-now.getDay()+1));
   var hasN=false;
   for(var i=0;i<7;i++){var nw=new Date(nm2);nw.setDate(nm2.getDate()+i);var nds=fm(nw),nt=getTasksForDate(nds);
-    if(nt.length){hasN=true;h+='<div class="nw-row" data-wds="'+nds+'" style="cursor:pointer"><div class="nw-day">'+DN[nw.getDay()]+' '+nw.getDate()+'</div><div class="nw-tasks">'+nt.map(function(t){return es(t.name);}).join(", ")+'</div><div class="nw-count">'+nt.length+'</div></div>';}}
+    if(nt.length){hasN=true;h+='<div class="nw-row" data-nwds="'+nds+'" style="cursor:pointer"><div class="nw-day">'+DN[nw.getDay()]+' '+nw.getDate()+'</div><div class="nw-tasks">'+nt.map(function(t){return es(t.name);}).join(", ")+'</div><div class="nw-count">'+nt.length+'</div></div>';}}
   if(!hasN)h+='<div class="empty">No tasks next week</div>';
-  h+='</div>';
+  h+='<div id="nwPreview"></div></div>';
   // Month
   h+='<div class="card"><div class="card-t">This Month — '+now.toLocaleDateString("en-IN",{month:"long"})+'</div>';
   var dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),mt=0,md=0;
@@ -567,8 +567,35 @@ function rDash(el,titleHtml){
   h+='<div class="quote">"'+QUOTES[doy%QUOTES.length]+'"</div>';
   h+='</div></div>';
   el.innerHTML=h;
-  // Week grid click → navigate to that day
-  el.querySelectorAll("[data-wds]").forEach(function(d){d.onclick=function(){CD=mk(this.dataset.wds);LD="";currentPage="today";renderPage();};});
+  // Week grid click → show tasks inline
+  function showDayPreview(targetId,dateStr){
+    var panel=document.getElementById(targetId);if(!panel)return;
+    var dt=mk(dateStr),tasks=getTasksForDate(dateStr);
+    var dl=dt.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"});
+    var isToday=dateStr===td();
+    var ph='<div style="margin-top:12px;padding:16px;background:var(--card2);border-radius:var(--radius);border:1px solid var(--border)">';
+    ph+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-family:var(--serif);font-size:15px">'+dl+'</div><button onclick="document.getElementById(\''+targetId+'\').innerHTML=\'\'" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text3)">&#10005;</button></div>';
+    if(!tasks.length){ph+='<div class="empty" style="padding:10px">No tasks</div>';}
+    else{for(var i=0;i<tasks.length;i++){var t=tasks[i];
+      ph+='<div style="font-size:13px;padding:4px 0;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></span><span>'+es(t.name)+'</span>';
+      if(t.time)ph+='<span style="font-size:10px;color:var(--text3);font-family:Consolas,monospace">'+es(t.time)+'</span>';
+      ph+='</div>';}
+    }
+    ph+='<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="CD=mk(\''+dateStr+'\');LD=\'\';currentPage=\'today\';renderPage();">Open '+(isToday?"Today":"This Day")+' &#8250;</button></div>';
+    ph+='</div>';
+    panel.innerHTML=ph;
+  }
+  el.querySelectorAll("[data-wds]").forEach(function(d){d.onclick=function(){
+    // Highlight selected day
+    el.querySelectorAll(".week-day").forEach(function(w){w.style.outline="";});
+    this.style.outline="2px solid var(--accent)";this.style.outlineOffset="-1px";
+    showDayPreview("weekPreview",this.dataset.wds);
+  };});
+  el.querySelectorAll("[data-nwds]").forEach(function(d){d.onclick=function(){
+    el.querySelectorAll(".nw-row").forEach(function(w){w.style.background="";});
+    this.style.background="var(--accent-bg)";
+    showDayPreview("nwPreview",this.dataset.nwds);
+  };});
 }
 
 // TODAY
