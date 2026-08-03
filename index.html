@@ -794,12 +794,21 @@ function lRep(y,m){var dim=new Date(y,m+1,0).getDate(),ld2=0,rows=[],tgt=0;for(v
 function sRS(rows){var t2=0,tp=0,ac=0,pf=0;for(var i=0;i<rows.length;i++){t2+=rows[i].c.done;tp+=rows[i].c.total;if(rows[i].c.done>0)ac++;if(rows[i].c.done===rows[i].c.total&&rows[i].c.total>0)pf++;}
   var pct=tp?Math.round(t2/tp*100):0,col=pct>=70?"var(--accent)":pct>=40?"var(--warm)":"var(--danger)";
   document.getElementById("cRep").innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="sb"><div class="big" style="color:'+col+'">'+pct+'%</div><div class="sm">Overall</div></div><div class="sb"><div class="big" style="color:var(--accent)">'+ac+'</div><div class="sm">Active Days</div></div><div class="sb"><div class="big" style="color:var(--warm)">'+pf+'</div><div class="sm">Perfect Days</div></div><div class="sb"><div class="big">'+rows.length+'</div><div class="sm">Tracked</div></div></div>';window._rr=rows;}
-function dlX(y,m){var rows=window._rr;if(!rows||!rows.length){ts("No data");return;}var all=(UD.tasks||[]).concat(UD.archivedTasks||[]);
-  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><style>table{border-collapse:collapse;font-family:Calibri;font-size:11px}td,th{border:1px solid #D9D9D9;padding:6px 8px;text-align:center}.t{font-size:18px;font-weight:bold;color:#7C8C6E;border:none;text-align:left}.hab{text-align:left;font-weight:600;background:#FAF5EE}.dh{background:#F6F1EB;font-weight:bold;font-size:10px}.y{background:#EEF2E9;color:#5A6A4C;font-weight:bold}.n{color:#DDD}.pg{background:#EEF2E9;color:#5A6A4C;font-weight:bold}.po{background:#FDF0E4;color:#C4956A;font-weight:bold}.pb{background:#FCEAE7;color:#C2665A;font-weight:bold}</style></head><body>';
-  var cols=rows.length+2;h+='<table><tr><td class="t" colspan="'+cols+'">1% Daily Tracker</td></tr><tr><td style="border:none;color:#A39483;text-align:left" colspan="'+cols+'">'+UD.name+' | '+new Date(y,m).toLocaleDateString("en-IN",{month:"long",year:"numeric"})+'</td></tr><tr><td colspan="'+cols+'" style="border:none"></td></tr>';
-  h+='<tr><th class="dh" style="text-align:left;min-width:180px">Task</th>';for(var i=0;i<rows.length;i++){var d=mk(rows[i].ds);h+='<th class="dh">'+d.getDate()+'<br><span style="font-size:8px;color:#A39483">'+DN[d.getDay()]+'</span></th>';}h+='<th class="dh">%</th></tr>';
-  for(var i=0;i<all.length;i++){var t=all[i],dn=0,sh=0;h+='<tr><td class="hab">'+t.name+'</td>';for(var j=0;j<rows.length;j++){var ac=getAllTasksForDate(rows[j].ds).some(function(x){return x.id===t.id;}),on=ac&&!!rows[j].obj[t.id];if(on)dn++;if(ac)sh++;h+='<td class="'+(ac?(on?"y":"n"):"n")+'">'+(ac?(on?"✓":"-"):".")+'</td>';}var p=sh?Math.round(dn/sh*100):0;h+='<td class="'+(p>=70?"pg":p>=40?"po":"pb")+'">'+p+'%</td></tr>';}
-  h+='</table></body></html>';var blob=new Blob([h],{type:"application/vnd.ms-excel"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Progress_"+y+"-"+pad(m+1)+".xls";document.body.appendChild(a);a.click();document.body.removeChild(a);ts("Downloaded!");}
+function dlX(y,m){var rows=window._rr;if(!rows||!rows.length){ts("No data");return;}
+  if(typeof XLSX==="undefined"){ts("Excel library not loaded");return;}var all=(UD.tasks||[]).concat(UD.archivedTasks||[]);
+  var aoa=[];
+  aoa.push(["1% Daily Tracker"]);
+  aoa.push([UD.name+" | "+new Date(y,m).toLocaleDateString("en-IN",{month:"long",year:"numeric"})]);
+  aoa.push([]);
+  var head=["Task"];for(var i=0;i<rows.length;i++){var d=mk(rows[i].ds);head.push(d.getDate()+" "+DN[d.getDay()]);}head.push("%");
+  aoa.push(head);
+  for(var i=0;i<all.length;i++){var t=all[i],dn=0,sh=0,row=[t.name];
+    for(var j=0;j<rows.length;j++){var ac=getAllTasksForDate(rows[j].ds).some(function(x){return x.id===t.id;}),on=ac&&!!rows[j].obj[t.id];if(on)dn++;if(ac)sh++;row.push(ac?(on?"✓":"-"):".");}
+    var p=sh?Math.round(dn/sh*100):0;row.push(p+"%");aoa.push(row);}
+  var ws=XLSX.utils.aoa_to_sheet(aoa);
+  var cw=[{wch:22}];for(var i=0;i<rows.length;i++)cw.push({wch:6});cw.push({wch:6});ws["!cols"]=cw;
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Progress");
+  XLSX.writeFile(wb,"Progress_"+y+"-"+pad(m+1)+".xlsx");ts("Downloaded!");}
 
 // TASKS
 function rTasks(el){
