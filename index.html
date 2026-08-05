@@ -297,6 +297,62 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 .cam-box{width:100%;border-radius:12px;overflow:hidden;background:var(--ink)}
 .cam-box video,.cam-box img{width:100%;display:block}
 .verified-tag{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:800;color:#fff;background:var(--accent);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ===== GOALS + 3D ===== */
+.medallion{width:100px;height:100px;margin:4px auto 12px;border-radius:26px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:48px;box-shadow:0 20px 34px rgba(140,10,0,.35),inset 0 2px 6px rgba(255,255,255,.25);transform-style:preserve-3d;animation:float3d 4.5s ease-in-out infinite}
+.medallion span{filter:drop-shadow(0 8px 8px rgba(0,0,0,.25));transform:translateZ(24px)}
+@keyframes float3d{0%,100%{transform:translateY(0) rotateY(-18deg) rotateX(7deg)}50%{transform:translateY(-12px) rotateY(18deg) rotateX(-5deg)}}
+.goal-hero{text-align:center;padding:8px 0 4px}
+.goal-hero h2{font-family:var(--display);font-size:30px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);line-height:1}
+.goal-hero p{font-size:12px;color:var(--text3);margin-top:6px}
+.goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;perspective:1000px}
+@media(min-width:768px){.goal-grid{grid-template-columns:repeat(3,1fr)}}
+.gcard{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;transform-style:preserve-3d;transition:transform .18s ease,box-shadow .25s ease;box-shadow:var(--shadow);position:relative;min-height:132px;will-change:transform;animation:card3d .55s cubic-bezier(.2,.7,.2,1) both}
+.gcard:hover{box-shadow:var(--shadow2)}
+.gcard .gc-ic{font-size:32px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.18));transform:translateZ(34px);display:inline-block}
+.gcard .gc-name{font-family:var(--display);font-size:15px;letter-spacing:.5px;margin-top:8px;text-transform:uppercase;line-height:1.05;transform:translateZ(20px)}
+.gcard .gc-dur{font-size:10px;color:var(--accent);font-weight:800;margin-top:6px;transform:translateZ(14px)}
+.gcard.started{border-color:var(--accent);background:linear-gradient(180deg,var(--card),var(--accent-bg))}
+.gcard .gc-badge{position:absolute;top:9px;right:9px;font-size:8px;font-weight:800;color:#fff;background:var(--accent);padding:2px 7px;border-radius:20px;text-transform:uppercase;transform:translateZ(24px)}
+@keyframes card3d{from{opacity:0;transform:rotateX(20deg) translateY(26px)}to{opacity:1;transform:none}}
+.ring{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:conic-gradient(var(--accent) calc(var(--p,0)*3.6deg),var(--card2) 0)}
+.ring .ring-in{width:44px;height:44px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:var(--accent);line-height:1}
+.ring .ring-in small{font-size:7px;color:var(--text3);letter-spacing:.5px}
+.active-goal{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:14px;margin-bottom:10px}
+.active-goal .ag-info{flex:1;min-width:0}
+.active-goal .ag-name{font-size:14px;font-weight:700;color:var(--text)}
+.active-goal .ag-meta{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Walkthrough 3D carousel */
+.walk-scene{perspective:1300px;min-height:340px;display:flex;align-items:center}
+.walk-card{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:30px 22px;text-align:center;box-shadow:var(--shadow2);transform-style:preserve-3d}
+.walk-card.in{animation:walkIn .5s cubic-bezier(.2,.7,.2,1) both}
+.walk-card.inrev{animation:walkInRev .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes walkIn{from{opacity:0;transform:translateX(55%) rotateY(38deg) scale(.9)}to{opacity:1;transform:none}}
+@keyframes walkInRev{from{opacity:0;transform:translateX(-55%) rotateY(-38deg) scale(.9)}to{opacity:1;transform:none}}
+.walk-badge{width:96px;height:96px;margin:0 auto;border-radius:26px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;box-shadow:0 16px 26px rgba(140,10,0,.3);transform-style:preserve-3d}
+.walk-badge span{font-size:48px;display:inline-block;animation:spin3d 6s linear infinite;filter:drop-shadow(0 8px 8px rgba(0,0,0,.2))}
+@keyframes spin3d{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+.walk-t{font-family:var(--display);font-size:26px;letter-spacing:.5px;text-transform:uppercase;margin:16px 0 8px;color:var(--accent)}
+.walk-s{font-size:13px;color:var(--text2);line-height:1.6;max-width:320px;margin:0 auto}
+.walk-dots{display:flex;gap:6px;justify-content:center;margin:16px 0}
+.walk-dots .wd{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .25s}
+.walk-dots .wd.on{background:var(--accent);width:22px;border-radius:5px}
+
+/* Goal detail flip */
+.flip-scene{perspective:1400px}
+.detail-3d{transform-style:preserve-3d;animation:flipIn .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes flipIn{from{opacity:0;transform:rotateY(-70deg)}to{opacity:1;transform:none}}
+.sub-item{display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;animation:card3d .5s both}
+.sub-item .si-ic{font-size:22px;flex-shrink:0}
+.sub-item .si-n{font-size:13px;font-weight:700;color:var(--text)}
+.sub-item .si-d{font-size:11px;color:var(--text3);margin-top:2px;line-height:1.4}
+.rule-opt{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.rule-opt.on{border-color:var(--accent);background:var(--accent-bg)}
+.rule-opt .ro-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;margin-top:1px;transition:all .15s}
+.rule-opt.on .ro-dot{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px #fff}
+.ro-t{font-size:13px;font-weight:700;color:var(--text)}
+.ro-d{font-size:11px;color:var(--text3);margin-top:2px}
 </style>
 </head>
 <body>
@@ -546,10 +602,10 @@ function showApp(){
   var nm=(UD.name||"User").split(" ")[0],hr=new Date().getHours(),g=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
   var ph=UD.photo?'<img class="av" src="'+UD.photo+'" alt="">':'';
   var phSB=UD.photo?'<img src="'+UD.photo+'" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--border);object-fit:cover" alt="">':'';
-  document.getElementById("root").innerHTML='<div class="app-shell"><div class="sidebar"><div class="sb-logo"><span class="sb-logo-icon">&#127807;</span><span class="sb-logo-text">1% Daily</span></div><div class="sb-user">'+phSB+'<div class="sb-user-info"><div class="sb-user-name">'+es(UD.name||"User")+'</div><div class="sb-user-streak" id="stk2"></div></div></div><nav id="snav"><a href="#" data-p="dashboard"><span class="s-ico">&#127968;</span>Dashboard</a><a href="#" data-p="showup"><span class="s-ico">&#128293;</span>Show Up</a><a href="#" data-p="today"><span class="s-ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="s-ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="s-ico">&#128221;</span>Manage Tasks</a><a href="#" data-p="rewards"><span class="s-ico">&#127942;</span>Rewards</a></nav><div class="sb-footer"><button id="lob2">Sign Out</button></div></div><div class="main-area"><div class="hdr">'+ph+'<div class="info"><div class="lbl">1% Better Every Day</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="so" id="lob">Sign Out</button></div><div id="pc"></div></div></div>';
+  document.getElementById("root").innerHTML='<div class="app-shell"><div class="sidebar"><div class="sb-logo"><span class="sb-logo-icon">&#127807;</span><span class="sb-logo-text">1% Daily</span></div><div class="sb-user">'+phSB+'<div class="sb-user-info"><div class="sb-user-name">'+es(UD.name||"User")+'</div><div class="sb-user-streak" id="stk2"></div></div></div><nav id="snav"><a href="#" data-p="dashboard"><span class="s-ico">&#127968;</span>Dashboard</a><a href="#" data-p="showup"><span class="s-ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="s-ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="s-ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="s-ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="s-ico">&#128221;</span>Manage Tasks</a><a href="#" data-p="rewards"><span class="s-ico">&#127942;</span>Rewards</a></nav><div class="sb-footer"><button id="lob2">Sign Out</button></div></div><div class="main-area"><div class="hdr">'+ph+'<div class="info"><div class="lbl">1% Better Every Day</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="so" id="lob">Sign Out</button></div><div id="pc"></div></div></div>';
   // Bottom nav for mobile
   var bn=document.createElement("div");bn.className="bnav";bn.id="bnav";
-  bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="showup"><span class="ico">&#128293;</span>Show Up</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
+  bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="showup"><span class="ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
   document.body.appendChild(bn);
   bn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
   // Sidebar nav
@@ -557,7 +613,7 @@ function showApp(){
   if(sn)sn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
   var lob=document.getElementById("lob");if(lob)lob.onclick=function(){if(confirm("Sign out?"))au.signOut();};
   var lob2=document.getElementById("lob2");if(lob2)lob2.onclick=function(){if(confirm("Sign out?"))au.signOut();};
-  SUD.coins=UD.showupCoins||0;SUD.best=UD.showupBest||0;SUD.freezes=UD.showupFreezes||[];UD.activeDuel=UD.activeDuel||"";UD.duelRole=UD.duelRole||"";
+  SUD.coins=UD.showupCoins||0;SUD.best=UD.showupBest||0;SUD.freezes=UD.showupFreezes||[];UD.activeDuel=UD.activeDuel||"";UD.duelRole=UD.duelRole||"";UD.goals=UD.goals||[];
   loadSU(function(){if(currentPage==="showup"||currentPage==="dashboard")renderPage();});
   currentPage="dashboard";renderPage();cS();
 }
@@ -568,10 +624,11 @@ function renderPage(){
   // Update sidebar nav
   var ss=document.querySelectorAll("#snav a");for(var i=0;i<ss.length;i++)ss[i].className=ss[i].dataset.p===currentPage?"on":"";
   var pc=document.getElementById("pc");if(!pc)return;
-  var titles={dashboard:"Dashboard",showup:"Show Up",today:"Today",calendar:"Calendar",tasks:"Manage Tasks",rewards:"Rewards"};
+  var titles={dashboard:"Dashboard",showup:"Show Up",goals:"Goals",today:"Today",calendar:"Calendar",tasks:"Manage Tasks",rewards:"Rewards"};
   var titleHtml='<div class="page-title">'+(titles[currentPage]||"")+'</div>';
   if(currentPage==="dashboard")rDash(pc,titleHtml);
   else if(currentPage==="showup"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rShowUp(sub);}
+  else if(currentPage==="goals"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rGoals(sub);}
   else if(currentPage==="today"){LD="";pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rToday(sub);}
   else if(currentPage==="calendar"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rCal(sub);}
   else if(currentPage==="tasks"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rTasks(sub);}
@@ -1097,6 +1154,163 @@ function renderDuel(){
     document.getElementById("duelRefresh").onclick=function(){updateDuelScore();renderDuel();};
     document.getElementById("duelLeave").onclick=function(){if(confirm("Leave this duel?"))leaveDuel();};
   }).catch(function(){z.innerHTML='<div style="font-size:12px;color:var(--text3)">Duels need Firestore access for the <code>duels</code> collection. Your solo streak still works perfectly.</div><button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:8px">Clear</button>';var dl=document.getElementById("duelLeave");if(dl)dl.onclick=leaveDuel;});
+}
+
+// ===== GOALS =====
+var GOAL_PRESETS=[
+ {id:"p_own",icon:"&#10024;",name:"Create your own",dur:"",days:0,desc:"Start from a blank goal and shape your own challenge — your name, your rules, your finish line.",subs:[],custom:true},
+ {id:"p_75hard",icon:"&#128293;",name:"75 Hard",dur:"75 days",days:75,desc:"A 75-day mental-toughness challenge. Stick to a strict plan every single day with no skips.",subs:[
+   {icon:"&#129367;",name:"Follow a strict diet",desc:"No cheat meals or alcohol for all 75 days."},
+   {icon:"&#127947;&#65039;",name:"Two 45-min workouts",desc:"Two sessions a day — one must be outdoors."},
+   {icon:"&#128167;",name:"Drink a gallon of water",desc:"About 3.8 litres of water every day."},
+   {icon:"&#128214;",name:"Read 10 pages",desc:"Ten pages of non-fiction or self-development."},
+   {icon:"&#128247;",name:"Take a progress photo",desc:"One daily photo to track your transformation."}]},
+ {id:"p_study",icon:"&#128218;",name:"Study 6h Daily",dur:"75 days",days:75,desc:"Put in six focused hours of study a day. Show up, keep the streak, and build the habit.",subs:[
+   {icon:"&#9201;&#65039;",name:"6 focused hours",desc:"Log six hours of deep, distraction-free study."}]},
+ {id:"p_iron",icon:"&#127946;",name:"Ironman 70.3",dur:"270 days",days:270,desc:"A nine-month build to race day. Train swim, bike and run with daily show-ups you mark yourself.",subs:[
+   {icon:"&#127946;",name:"Swim",desc:"Pool or open-water session — build technique and endurance."},
+   {icon:"&#128692;",name:"Bike",desc:"Trainer or road ride — build volume and stamina."},
+   {icon:"&#127939;",name:"Run",desc:"Easy run, intervals, or a brick off the bike."}]},
+ {id:"p_nosugar",icon:"&#127851;",name:"No Sugar",dur:"30 days",days:30,desc:"Cut out all added sugar for 30 days. Reset your palate, curb cravings, and feel the energy shift.",subs:[
+   {icon:"&#128683;",name:"No added sugar",desc:"Skip all added sugar for the whole day."}]},
+ {id:"p_move",icon:"&#129337;",name:"Move Every Day",dur:"7 days",days:7,desc:"Move your body every single day for a week. Walk, run, dance, stretch — anything counts.",subs:[
+   {icon:"&#128694;",name:"Move your body",desc:"Any movement — just get it in."}]},
+ {id:"p_leet",icon:"&#128187;",name:"100 Days Code",dur:"100 days",days:100,desc:"Solve one coding problem every day for 100 days. Sharpen problem-solving and master DSA.",subs:[
+   {icon:"&#128187;",name:"One problem a day",desc:"Solve at least one problem daily."}]},
+ {id:"p_together",icon:"&#127919;",name:"Get It Together",dur:"14 days",days:14,desc:"Four daily basics for 14 days: sleep on time, move, keep your space clean, cap social media.",subs:[
+   {icon:"&#127769;",name:"Sleep on time",desc:"Hit your target bedtime every night."},
+   {icon:"&#127939;",name:"Move body",desc:"Move every day — walk, stretch or work out."},
+   {icon:"&#129529;",name:"Keep space clean",desc:"Tidy your space so it stays calm and livable."},
+   {icon:"&#128245;",name:"Social under 20 min",desc:"Stay under 20 minutes on social apps."}]}
+];
+var WALK_STEPS=[
+ {icon:"&#127919;",t:"Set your goal",s:"Start with one thing you're working towards. Add sub-goals to split a day into parts."},
+ {icon:"&#128197;",t:"Set an end date",s:"Give it a deadline, or leave it open-ended for habits. You can change this anytime."},
+ {icon:"&#128221;",t:"Log the day",s:"Write what happened in your own words. A few lines is enough — add a photo if you like."},
+ {icon:"&#128293;",t:"Show up",s:"Mark the days you did the work. Tap today to keep your momentum building."},
+ {icon:"&#128681;",t:"Add milestones",s:"Set dated checkpoints so a long goal breaks into wins you can actually reach."},
+ {icon:"&#9878;&#65039;",t:"Check in weekly",s:"Set a momentum target for the week and pick one thing to focus on next."}
+];
+function saveGoals(cb){if(!U){if(cb)cb();return;}db.collection("users").doc(U.uid).update({goals:UD.goals||[]}).then(function(){if(cb)cb();}).catch(function(e){ts("Error: "+e.message);});}
+function addDaysStr(ds,n){var d=mk(ds);d.setDate(d.getDate()+n);return fm(d);}
+function goalProgress(g){var done=(g.log||[]).length,pct=g.days>0?Math.min(100,Math.round(done/g.days*100)):Math.min(100,done*10);return{done:done,pct:pct};}
+function attachTilt(card){
+  card.addEventListener("pointermove",function(e){
+    var r=card.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-0.5,py=(e.clientY-r.top)/r.height-0.5;
+    card.style.transform="rotateY("+(px*14)+"deg) rotateX("+(-py*14)+"deg) translateZ(6px)";
+  });
+  card.addEventListener("pointerleave",function(){card.style.transform="";});
+  card.addEventListener("pointerdown",function(){card.style.transform="scale(.97)";});
+}
+function rGoals(el){
+  var goals=UD.goals||[];
+  var h='<div class="goal-hero scene"><div class="medallion"><span>&#127919;</span></div><h2>Chase a Goal</h2><p>Pick a challenge, keep the chain, finish it.</p><button class="btn btn-ghost btn-sm" id="howBtn" style="margin-top:10px">&#10024; How it works (3D tour)</button></div>';
+  if(goals.length){
+    h+='<div class="card"><div class="card-t">Your Active Goals ('+goals.length+')</div>';
+    for(var i=0;i<goals.length;i++){var g=goals[i],p=goalProgress(g),didToday=(g.log||[]).indexOf(td())!==-1;
+      h+='<div class="active-goal"><div class="ring" style="--p:'+p.pct+'"><div class="ring-in">'+p.pct+'<small>%</small></div></div>';
+      h+='<div class="ag-info"><div class="ag-name">'+g.icon+' '+es(g.name)+'</div><div class="ag-meta">Day '+p.done+(g.days>0?" of "+g.days:"")+' &middot; '+(g.subs&&g.subs.length?g.subs.length+" sub-goals":"single goal")+'</div></div>';
+      h+='<button class="btn '+(didToday?"btn-ghost":"btn-primary")+' btn-sm goal-mark" data-g="'+g.id+'" '+(didToday?"disabled":"")+'>'+(didToday?"&#10003; Today":"Mark Today")+'</button>';
+      h+='<button class="goal-open" data-g="'+g.id+'" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text3);padding:4px">&#8250;</button></div>';
+    }
+    h+='</div>';
+  }
+  h+='<div class="card"><div class="card-t">Goal Library — tap to open</div><div class="goal-grid" id="goalGrid">';
+  for(var i=0;i<GOAL_PRESETS.length;i++){var g=GOAL_PRESETS[i];var started=goals.some(function(x){return x.presetId===g.id;});
+    h+='<div class="gcard'+(started?" started":"")+'" data-pi="'+i+'" style="animation-delay:'+(i*0.05)+'s">'+(started?'<div class="gc-badge">Active</div>':'')+'<div class="gc-ic">'+g.icon+'</div><div class="gc-name">'+es(g.name)+'</div>'+(g.dur?'<div class="gc-dur">'+g.dur+'</div>':'<div class="gc-dur">Custom</div>')+'</div>';
+  }
+  h+='</div></div>';
+  el.innerHTML=h;
+  document.getElementById("howBtn").onclick=openWalkthrough;
+  el.querySelectorAll(".gcard").forEach(function(c){attachTilt(c);c.addEventListener("click",function(){openGoalDetail(GOAL_PRESETS[parseInt(this.dataset.pi)]);});});
+  el.querySelectorAll(".goal-mark").forEach(function(b){b.onclick=function(e){e.stopPropagation();markGoalToday(this.dataset.g);};});
+  el.querySelectorAll(".goal-open").forEach(function(b){b.onclick=function(e){e.stopPropagation();var gid=this.dataset.g,g=(UD.goals||[]).filter(function(x){return x.id===gid;})[0];if(g)openActiveGoal(g);};});
+}
+function markGoalToday(id){
+  var g=(UD.goals||[]).filter(function(x){return x.id===id;})[0];if(!g)return;
+  g.log=g.log||[];if(g.log.indexOf(td())!==-1){ts("Already marked today");return;}
+  g.log.push(td());SUD.coins=(SUD.coins||0)+3;
+  saveGoals(function(){saveSUmeta(function(){ts("&#127919; Progress logged! +3 coins");renderPage();});});
+}
+function openActiveGoal(g){
+  var p=goalProgress(g);
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
+  var h='<div class="detail-3d"><div class="modal-title"><span>'+g.icon+' '+es(g.name)+'</span><button class="modal-close" id="agX">&#10005;</button></div>';
+  h+='<div style="text-align:center;margin-bottom:14px"><div class="ring" style="--p:'+p.pct+';width:88px;height:88px;margin:0 auto"><div class="ring-in" style="width:70px;height:70px;font-size:22px">'+p.pct+'<small>%</small></div></div><div style="font-size:12px;color:var(--text3);margin-top:8px">Day '+p.done+(g.days>0?" of "+g.days:"")+' &middot; started '+es(g.start||"")+'</div></div>';
+  if(g.subs&&g.subs.length){h+='<div class="card-t">Daily Sub-Goals</div>';for(var i=0;i<g.subs.length;i++){var s=g.subs[i];h+='<div class="sub-item"><div class="si-ic">'+s.icon+'</div><div><div class="si-n">'+es(s.name)+'</div><div class="si-d">'+es(s.desc)+'</div></div></div>';}}
+  var didToday=(g.log||[]).indexOf(td())!==-1;
+  h+='<button class="btn '+(didToday?"btn-ghost":"btn-primary")+' btn-full" id="agMark" style="margin-top:12px" '+(didToday?"disabled":"")+'>'+(didToday?"&#10003; Marked today":"Mark Today Done")+'</button>';
+  h+='<button class="btn btn-ghost btn-full" id="agDrop" style="margin-top:8px;color:var(--danger)">Drop this goal</button></div>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  function close(){if(ov.parentNode)document.body.removeChild(ov);}
+  document.getElementById("agX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+  document.getElementById("agMark").onclick=function(){close();markGoalToday(g.id);};
+  document.getElementById("agDrop").onclick=function(){if(!confirm("Drop \""+g.name+"\"? Your logged days will be lost."))return;UD.goals=(UD.goals||[]).filter(function(x){return x.id!==g.id;});saveGoals(function(){ts("Goal dropped");close();renderPage();});};
+}
+function openGoalDetail(preset){
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
+  var custom=!!preset.custom,rule="auto";
+  var startDs=td(),days=preset.days||30,customSubs=[];
+  var h='<div class="detail-3d" id="gd3d">';
+  h+='<div class="modal-title"><span id="gdTitle">'+preset.icon+' '+es(preset.name)+'</span><button class="modal-close" id="gdX">&#10005;</button></div>';
+  if(custom){
+    h+='<label style="margin-top:0">Goal name</label><input id="cName" placeholder="e.g. Read 12 books">';
+    h+='<label>Description</label><input id="cDesc" placeholder="What is this goal about?">';
+    h+='<label>Duration (days)</label><input id="cDays" type="number" min="1" value="30">';
+    h+='<label>Sub-goals (optional)</label><div id="cSubList"></div><div style="display:flex;gap:8px"><input id="cSubName" placeholder="Sub-goal name"><button class="btn btn-ghost btn-sm" id="cSubAdd" style="flex-shrink:0">+ Add</button></div>';
+  }else{
+    h+='<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:16px">'+es(preset.desc)+'</div>';
+    if(preset.subs.length){h+='<div class="card-t">Daily Sub-Goals</div>';for(var i=0;i<preset.subs.length;i++){var s=preset.subs[i];h+='<div class="sub-item" style="animation-delay:'+(i*0.06)+'s"><div class="si-ic">'+s.icon+'</div><div><div class="si-n">'+es(s.name)+'</div><div class="si-d">'+es(s.desc)+'</div></div></div>';}}
+  }
+  h+='<div class="card-t" style="margin-top:16px">When is a day complete?</div>';
+  h+='<div class="rule-opt on" data-r="auto"><div class="ro-dot"></div><div><div class="ro-t">Auto-mark when all done</div><div class="ro-d">The day completes when every sub-goal is ticked.</div></div></div>';
+  h+='<div class="rule-opt" data-r="self"><div class="ro-dot"></div><div><div class="ro-t">I\'ll mark it myself</div><div class="ro-d">Sub-goals are for tracking; you decide when the day counts.</div></div></div>';
+  h+='<div class="card-t" style="margin-top:16px">Timeline</div>';
+  h+='<label style="margin-top:0">Start date</label><input id="gdStart" type="date" value="'+startDs+'">';
+  h+='<label>Target date</label><input id="gdTarget" type="date" value="'+addDaysStr(startDs,days)+'">';
+  h+='<button class="btn btn-primary btn-full" id="gdStartBtn" style="margin-top:18px;font-size:15px">&#128293; Start '+es(custom?"Goal":preset.name)+'</button>';
+  h+='</div>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  function close(){if(ov.parentNode)document.body.removeChild(ov);}
+  document.getElementById("gdX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+  md.querySelectorAll(".rule-opt").forEach(function(o){o.onclick=function(){rule=this.dataset.r;md.querySelectorAll(".rule-opt").forEach(function(x){x.classList.remove("on");});this.classList.add("on");};});
+  // sync target when start/days change
+  var startI=document.getElementById("gdStart"),targetI=document.getElementById("gdTarget");
+  if(custom){
+    var cDays=document.getElementById("cDays");
+    function syncT(){targetI.value=addDaysStr(startI.value||td(),parseInt(cDays.value)||30);}
+    cDays.oninput=syncT;startI.onchange=syncT;
+    document.getElementById("cSubAdd").onclick=function(){var nm=(document.getElementById("cSubName").value||"").trim();if(!nm)return;customSubs.push({icon:"&#9989;",name:nm,desc:""});document.getElementById("cSubName").value="";var list=document.getElementById("cSubList");list.innerHTML=customSubs.map(function(s){return '<div class="sub-item"><div class="si-ic">'+s.icon+'</div><div><div class="si-n">'+es(s.name)+'</div></div></div>';}).join("");};
+  }else{startI.onchange=function(){targetI.value=addDaysStr(startI.value||td(),days);};}
+  document.getElementById("gdStartBtn").onclick=function(){
+    var name=preset.name,desc=preset.desc,dur=preset.dur,dcount=preset.days,subs=preset.subs;
+    if(custom){name=(document.getElementById("cName").value||"").trim();if(!name){ts("Enter a goal name");return;}desc=(document.getElementById("cDesc").value||"").trim();dcount=parseInt(document.getElementById("cDays").value)||30;dur=dcount+" days";subs=customSubs.slice();}
+    var st=startI.value||td(),tg=targetI.value||addDaysStr(st,dcount);
+    var goal={id:"g_"+Date.now(),presetId:custom?"":preset.id,icon:preset.icon,name:name,desc:desc,dur:dur,days:dcount,subs:subs,rule:rule,start:st,target:tg,log:[],createdAt:Date.now()};
+    UD.goals=UD.goals||[];UD.goals.push(goal);
+    saveGoals(function(){ts("&#127919; "+name+" started!");close();currentPage="goals";renderPage();});
+  };
+}
+function openWalkthrough(){
+  var idx=0;
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal";
+  md.innerHTML='<div class="modal-title"><span>How It Works</span><button class="modal-close" id="wkX">&#10005;</button></div><div class="walk-scene" id="wkScene"></div><div class="walk-dots" id="wkDots"></div><div style="display:flex;gap:8px;margin-top:6px"><button class="btn btn-ghost btn-sm" id="wkBack" style="flex:1">Back</button><button class="btn btn-primary btn-sm" id="wkNext" style="flex:2">Next</button></div>';
+  ov.appendChild(md);document.body.appendChild(ov);
+  function close(){if(ov.parentNode)document.body.removeChild(ov);}
+  document.getElementById("wkX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+  function draw(dir){
+    var st=WALK_STEPS[idx],sc=document.getElementById("wkScene");
+    sc.innerHTML='<div class="walk-card '+(dir<0?"inrev":"in")+'"><div class="walk-badge"><span>'+st.icon+'</span></div><div class="walk-t">'+st.t+'</div><div class="walk-s">'+st.s+'</div></div>';
+    var dots="";for(var i=0;i<WALK_STEPS.length;i++)dots+='<div class="wd'+(i===idx?" on":"")+'"></div>';document.getElementById("wkDots").innerHTML=dots;
+    document.getElementById("wkBack").style.visibility=idx===0?"hidden":"visible";
+    document.getElementById("wkNext").textContent=idx===WALK_STEPS.length-1?"Pick a Goal":"Next";
+  }
+  document.getElementById("wkNext").onclick=function(){if(idx>=WALK_STEPS.length-1){close();return;}idx++;draw(1);};
+  document.getElementById("wkBack").onclick=function(){if(idx>0){idx--;draw(-1);}};
+  // swipe
+  var sx=0;md.addEventListener("touchstart",function(e){sx=e.touches[0].clientX;},{passive:true});
+  md.addEventListener("touchend",function(e){var dx=e.changedTouches[0].clientX-sx;if(dx<-40&&idx<WALK_STEPS.length-1){idx++;draw(1);}else if(dx>40&&idx>0){idx--;draw(-1);}});
+  draw(1);
 }
 
 // REWARDS
