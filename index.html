@@ -438,7 +438,7 @@ function rmBnav(){var b=document.getElementById("bnav");if(b)b.parentNode.remove
 function showLogin(){
   rmBnav();
   document.getElementById("root").innerHTML='<div class="login"><div class="login-logo">&#128293;</div><h1>1% Daily</h1><p>Show up every day.<br>Keep the chain. Get 1% better.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:260px;margin-top:44px"><div class="feat"><span class="feat-icon">&#128293;</span> Daily Show Up streak &amp; chain</div><div class="feat"><span class="feat-icon">&#9876;&#65039;</span> Challenge your bestie 1v1</div><div class="feat"><span class="feat-icon">&#128197;</span> Day-specific task scheduling</div><div class="feat"><span class="feat-icon">&#127942;</span> Rewards, milestones &amp; coins</div><div class="feat"><span class="feat-icon">&#128229;</span> Import &amp; export via Excel</div></div></div>';
-  document.getElementById("gl").onclick=function(){var p=new firebase.auth.GoogleAuthProvider();au.signInWithPopup(p).then(function(result){if(result.credential&&result.credential.accessToken)window._gcalToken=result.credential.accessToken;}).catch(function(e){if(e.code==="auth/popup-blocked")au.signInWithRedirect(p);else if(e.code!=="auth/popup-closed-by-user"&&e.code!=="auth/cancelled-popup-request")ts("Login failed: "+(e.message||e.code));});};
+  document.getElementById("gl").onclick=function(){var p=new firebase.auth.GoogleAuthProvider();au.signInWithPopup(p).catch(function(e){if(e.code==="auth/popup-blocked")au.signInWithRedirect(p);else if(e.code!=="auth/popup-closed-by-user"&&e.code!=="auth/cancelled-popup-request")ts("Login failed: "+(e.message||e.code));});};
 }
 
 // ONBOARDING
@@ -713,137 +713,6 @@ function rDash(el,titleHtml){
 
 // TODAY
 function rToday(el){var ds=fm(CD),it=ds===td(),fu=CD>new Date();if(ds!==LD){LD=ds;ld(ds,function(o){PD=o;bToday(el,ds,it,fu);});}else bToday(el,ds,it,fu);}
-// Google Calendar API integration
-function getGCalToken(cb){
-  // Check if we have a stored token
-  if(window._gcalToken){cb(window._gcalToken);return;}
-  // Re-auth with calendar scope to get token
-  var p=new firebase.auth.GoogleAuthProvider();
-  p.addScope("https://www.googleapis.com/auth/calendar.events");
-  au.signInWithPopup(p).then(function(result){
-    if(result.credential&&result.credential.accessToken){
-      window._gcalToken=result.credential.accessToken;
-      cb(window._gcalToken);
-    }else{ts("Could not get calendar access");cb(null);}
-  }).catch(function(e){ts("Calendar auth failed: "+e.message);cb(null);});
-}
-
-function createGCalEvent(token,task,callback){
-  var dayMapRRule={0:"SU",1:"MO",2:"TU",3:"WE",4:"TH",5:"FR",6:"SA"};
-  // Find next valid start date
-  var startDate=td();
-  if(task.days&&task.days.length>0){
-    var dt=new Date();
-    for(var a=0;a<7;a++){
-      var check=new Date(dt);check.setDate(dt.getDate()+a);
-      if(task.days.indexOf(check.getDay())!==-1){startDate=fm(check);break;}
-    }
-  }
-  var event={summary:task.name,description:task.desc||""};
-  // Parse time
-  if(task.time){
-    var parts=task.time.replace(/–/g,"-").split("-").map(function(s){return s.trim();});
-    if(parts.length===2){
-      var s=parts[0].replace(/[^0-9:]/g,""),e=parts[1].replace(/[^0-9:]/g,"");
-      if(s&&e){
-        event.start={dateTime:startDate+"T"+s+":00",timeZone:"Asia/Kolkata"};
-        event.end={dateTime:startDate+"T"+e+":00",timeZone:"Asia/Kolkata"};
-      }
-    }
-  }
-  if(!event.start){
-    event.start={date:startDate};
-    event.end={date:startDate};
-  }
-  // Add recurrence
-  if(task.days&&task.days.length>0){
-    if(task.days.length===7){
-      event.recurrence=["RRULE:FREQ=DAILY"];
-    }else{
-      var byDay=task.days.map(function(d){return dayMapRRule[d];}).join(",");
-      event.recurrence=["RRULE:FREQ=WEEKLY;BYDAY="+byDay];
-    }
-  }
-  // Add reminder
-  event.reminders={useDefault:false,overrides:[{method:"popup",minutes:10}]};
-  
-  fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events",{
-    method:"POST",
-    headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
-    body:JSON.stringify(event)
-  }).then(function(r){
-    if(r.ok)return r.json();
-    if(r.status===401){window._gcalToken=null;throw new Error("Token expired");}
-    throw new Error("API error "+r.status);
-  }).then(function(data){callback(null,data);}).catch(function(err){callback(err);});
-}
-
-function bulkAddToGCal(tasks,statusCb){
-  getGCalToken(function(token){
-    if(!token)return;
-    var total=tasks.length,done=0,failed=0;
-    statusCb(0,total);
-    function next(idx){
-      if(idx>=total){statusCb(done,total,true,failed);return;}
-      createGCalEvent(token,tasks[idx],function(err){
-        if(err){failed++;if(err.message==="Token expired"){
-          // Re-auth and retry
-          getGCalToken(function(newToken){
-            if(!newToken){statusCb(done,total,true,failed);return;}
-            token=newToken;next(idx);// retry same task
-          });return;
-        }}else{done++;}
-        statusCb(done,total,false,failed);
-        setTimeout(function(){next(idx+1);},300);// rate limit
-      });
-    }
-    next(0);
-  });
-}
-
-function gcalUrl(task,dateStr){
-  var title=encodeURIComponent(task.name);
-  var desc=encodeURIComponent(task.desc||"");
-  var base="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+title+"&details="+desc;
-  // Find the correct start date: next day that matches task.days
-  var startDate=dateStr;
-  if(task.days&&task.days.length>0){
-    var dt=mk(dateStr);
-    // Check if today matches, if not find next matching day
-    var found=false;
-    for(var attempt=0;attempt<7;attempt++){
-      var checkDate=new Date(dt);
-      checkDate.setDate(dt.getDate()+attempt);
-      if(task.days.indexOf(checkDate.getDay())!==-1){
-        startDate=fm(checkDate);
-        found=true;
-        break;
-      }
-    }
-  }
-  if(task.time){
-    var parts=task.time.replace(/–/g,"-").split("-").map(function(s){return s.trim();});
-    if(parts.length===2){
-      var s=parts[0].replace(/[^0-9:]/g,""),e=parts[1].replace(/[^0-9:]/g,"");
-      if(s&&e){
-        var d=startDate.replace(/-/g,"");
-        var st=d+"T"+s.replace(":","")+"00";
-        var et=d+"T"+e.replace(":","")+"00";
-        base+="&dates="+st+"/"+et;
-      }
-    }
-  }
-  // Add recurrence based on task days
-  if(task.days&&task.days.length>0&&task.days.length<7){
-    var dayMap={0:"SU",1:"MO",2:"TU",3:"WE",4:"TH",5:"FR",6:"SA"};
-    var byDay=task.days.map(function(d){return dayMap[d];}).join(",");
-    base+="&recur=RRULE:FREQ%3DWEEKLY%3BBYDAY%3D"+byDay;
-  } else if(task.days&&task.days.length===7){
-    base+="&recur=RRULE:FREQ%3DDAILY";
-  }
-  return base;
-}
-
 function bToday(el,ds,it,fu){
   var tasks=getTasksForDate(ds),dl=CD.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"});
   var dot=it?' <span style="display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;vertical-align:middle"></span>':"";
@@ -858,7 +727,7 @@ function bToday(el,ds,it,fu){
       if(t.time) h+='<div class="td2" style="color:var(--accent);font-family:Consolas,monospace;font-size:10px">&#128337; '+es(t.time)+'</div>';
       if(t.desc)h+='<div class="td2">'+es(t.desc)+'</div>';
       if(t.numId){var v=PD[t.numId]||0;h+='<div class="nb" data-stop="1"><span>'+es(t.numLabel)+'</span><input type="number" min="0" value="'+v+'" data-nid="'+t.numId+'"'+(locked?" disabled":"")+'></div>';}
-      h+='</div><a href="'+gcalUrl(t,ds)+'" target="_blank" data-stop="1" title="Add to Google Calendar" style="font-size:16px;text-decoration:none;padding:4px;flex-shrink:0;opacity:.4;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.4">&#128197;</a></div>';}h+='</div>';}
+      h+='</div></div>';}h+='</div>';}
   if(it)h+='<div class="sub-wrap" id="autoSaveBar" style="display:none"><div class="sub-btn saved" style="pointer-events:none;font-size:13px">&#10003; Auto-saved</div></div>';
   el.innerHTML=h;
   document.getElementById("dp").onclick=function(){CD.setDate(CD.getDate()-1);LD="";rToday(el);};
@@ -919,48 +788,16 @@ function rTasks(el){
   var active=(UD.tasks||[]).filter(function(t){return!t.archived;}),arc=UD.archivedTasks||[];
   var h='<div class="card"><div class="card-t">Import from Excel</div><div class="import-zone" id="tmIZ"><div style="font-size:24px">&#128196;</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Tap to upload .xlsx</div><input type="file" accept=".xlsx,.xls,.csv" style="display:none" id="tmFI"></div></div>';
   h+='<div class="card"><div class="card-t">Add New Task</div><label style="margin-top:0">Task Name</label><input id="tmN" placeholder="e.g. GYM, English Practice..."><label>Description</label><input id="tmD" placeholder="Optional"><label>Time</label><input id="tmT" placeholder="e.g. 19:30 – 20:30"><label>Which days?</label><div class="day-pills" id="tmDP"></div><label>Track a number?</label><input id="tmNL" placeholder="Optional"><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="tmA">+ Add Task</button></div></div>';
-  h+='<div class="card"><div class="card-t" style="display:flex;align-items:center;justify-content:space-between">Active Tasks ('+active.length+')<button class="btn btn-warm btn-sm" id="gcalAll" style="font-size:10px">&#128197; Add All to Google Calendar</button></div>';
+  h+='<div class="card"><div class="card-t">Active Tasks ('+active.length+')</div>';
   if(!active.length)h+='<div class="empty">No active tasks</div>';
-  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><button class="tm-gc" data-t="'+t.id+'" title="Add to Google Calendar">&#128197;</button><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
+  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
   h+='</div>';
   if(arc.length){h+='<div class="card"><div class="card-t">Archived ('+arc.length+')</div>';for(var i=0;i<arc.length;i++){var t=arc[i];h+='<div class="task-item archived"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+'</div></div><div class="task-actions"><button class="tm-r" data-t="'+t.id+'" title="Restore">&#128260;</button></div></div>';}h+='</div>';}
   el.innerHTML=h;
-  // Add All to Google Calendar
-  var gcBtn=document.getElementById("gcalAll");
-  if(gcBtn)gcBtn.onclick=function(){
-    var withTime=active.filter(function(t){return t.time;});
-    if(!withTime.length){ts("No tasks with time set");return;}
-    if(!confirm("Add "+withTime.length+" recurring events to your Google Calendar?\nEach will have the correct days and times with weekly recurrence."))return;
-    gcBtn.disabled=true;gcBtn.textContent="Adding...";
-    bulkAddToGCal(withTime,function(done,total,finished,failed){
-      gcBtn.textContent="Adding... "+done+"/"+total;
-      if(finished){
-        gcBtn.disabled=false;
-        if(failed>0){gcBtn.innerHTML="&#128197; Done! "+done+" added, "+failed+" failed";ts(done+" events added, "+failed+" failed");}
-        else{gcBtn.innerHTML="&#9989; All "+done+" events added!";ts("All "+done+" events added to Google Calendar!");}
-        setTimeout(function(){gcBtn.innerHTML="&#128197; Add All to Google Calendar";},5000);
-      }
-    });
-  };
   var iz=document.getElementById("tmIZ"),fi=document.getElementById("tmFI");if(iz)iz.onclick=function(){fi.click();};if(fi)fi.onchange=function(){if(fi.files.length)handleImport(fi.files[0],false);};
   var sD=[],dp=document.getElementById("tmDP");if(dp)buildDayPills(dp,sD);
   var ab=document.getElementById("tmA");if(ab)ab.onclick=function(){var n=(document.getElementById("tmN").value||"").trim();if(!n){ts("Enter name");return;}if(!sD.length){ts("Select days");return;}var d=(document.getElementById("tmD").value||"").trim(),nl=(document.getElementById("tmNL").value||"").trim(),tm=(document.getElementById("tmT").value||"").trim();UD.tasks.push({id:"t_"+Date.now(),name:n,desc:d,time:tm,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});saveUD(function(){ts("Task added!");rTasks(el);});};
   el.querySelectorAll(".tm-e").forEach(function(b){b.onclick=function(e){e.stopPropagation();showEdit(this.dataset.t,el);};});
-  el.querySelectorAll(".tm-gc").forEach(function(b){b.onclick=function(e){
-    e.stopPropagation();var tid=this.dataset.t,btn=this;
-    var task;for(var i=0;i<active.length;i++)if(active[i].id===tid){task=active[i];break;}
-    if(!task){ts("Task not found");return;}
-    if(!task.time){ts("Set a time first to add to calendar");return;}
-    btn.textContent="...";btn.disabled=true;
-    getGCalToken(function(token){
-      if(!token){btn.textContent="📅";btn.disabled=false;return;}
-      createGCalEvent(token,task,function(err){
-        btn.disabled=false;
-        if(err){btn.textContent="📅";ts("Failed: "+err.message);}
-        else{btn.textContent="✅";ts(task.name+" added to Google Calendar!");setTimeout(function(){btn.textContent="📅";},3000);}
-      });
-    });
-  };});
   el.querySelectorAll(".tm-a").forEach(function(b){b.onclick=function(e){e.stopPropagation();var tid=this.dataset.t;if(!confirm("Archive? Removed from daily but kept in reports."))return;var idx=-1;for(var i=0;i<UD.tasks.length;i++)if(UD.tasks[i].id===tid){idx=i;break;}if(idx===-1)return;var t=UD.tasks.splice(idx,1)[0];t.archivedDate=td();UD.archivedTasks.push(t);saveUD(function(){ts("Archived");rTasks(el);});};});
   el.querySelectorAll(".tm-d").forEach(function(b){b.onclick=function(e){e.stopPropagation();var tid=this.dataset.t;if(!confirm("Delete permanently? History will be lost."))return;UD.tasks=UD.tasks.filter(function(t){return t.id!==tid;});saveUD(function(){ts("Deleted");rTasks(el);});};});
   el.querySelectorAll(".tm-r").forEach(function(b){b.onclick=function(e){e.stopPropagation();var tid=this.dataset.t,idx=-1;for(var i=0;i<UD.archivedTasks.length;i++)if(UD.archivedTasks[i].id===tid){idx=i;break;}if(idx===-1)return;var t=UD.archivedTasks.splice(idx,1)[0];delete t.archivedDate;UD.tasks.push(t);saveUD(function(){ts("Restored");rTasks(el);});};});
