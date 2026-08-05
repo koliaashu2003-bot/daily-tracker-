@@ -4,26 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#F6F1EB">
-<title>1% Daily Tracker</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#A90E02">
+<title>1% Daily · Show Up</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#F6F1EB;--bg2:#FFF9F3;--card:#FFFFFF;--card2:#FAF5EE;
-  --text:#2C2416;--text2:#6B5D4F;--text3:#A39483;--text4:#C7B9A8;
-  --accent:#7C8C6E;--accent2:#9AAB89;--accent-bg:#EEF2E9;--accent-dark:#5A6A4C;
-  --warm:#C4956A;--warm-bg:#FDF0E4;--warm2:#D4A574;
-  --danger:#C2665A;--danger-bg:#FCEAE7;
-  --border:#E8E0D6;--border2:#D9CEBD;
-  --shadow:0 1px 3px rgba(44,36,22,.06),0 1px 2px rgba(44,36,22,.04);
-  --shadow2:0 4px 12px rgba(44,36,22,.08),0 1px 3px rgba(44,36,22,.04);
+  --bg:#FFFBEB;--bg2:#FFFDF4;--card:#FFFFFF;--card2:#FFF8DC;
+  --text:#171208;--text2:#5E5228;--text3:#9A8748;--text4:#CBB877;
+  --accent:#A90E02;--accent2:#D12A16;--accent-bg:#FCE4DE;--accent-dark:#7C0A01;
+  --ink:#141210;--lemon:#FFFBD4;
+  --warm:#C48A16;--warm-bg:#FFF3CE;--warm2:#E0A62A;
+  --danger:#D6483B;--danger-bg:#FCEAE7;
+  --border:#F0E4B4;--border2:#E3D390;
+  --shadow:0 1px 3px rgba(90,45,0,.08),0 1px 2px rgba(90,45,0,.05);
+  --shadow2:0 6px 18px rgba(140,10,0,.12),0 2px 6px rgba(90,45,0,.06);
   --radius:12px;--radius2:16px;
-  --serif:'DM Serif Display',Georgia,serif;
+  --serif:'Anton',Impact,'Arial Narrow Bold',sans-serif;
+  --display:'Anton',Impact,'Arial Narrow Bold',sans-serif;
   --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -168,7 +170,7 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 /* Submit */
 .sub-wrap{position:sticky;bottom:72px;z-index:10}
 @media(min-width:768px){.sub-wrap{bottom:20px}}
-.sub-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(124,140,110,.3);font-family:var(--sans);transition:all .15s}
+.sub-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(169,14,2,.3);font-family:var(--sans);transition:all .15s}
 .sub-btn:active{transform:scale(.97)}
 .sub-btn.saved{background:var(--warm)}
 .sub-btn:disabled{opacity:.5}
@@ -218,7 +220,7 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 .sb .sm{font-size:10px;color:var(--text3);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 
 /* Rewards */
-.rew-banner{background:linear-gradient(135deg,#D4A574,#C4956A);border-radius:var(--radius2);padding:24px;margin-bottom:14px;text-align:center;color:#fff;box-shadow:0 4px 16px rgba(196,149,106,.25)}
+.rew-banner{background:linear-gradient(135deg,#D12A16,#A90E02);border-radius:var(--radius2);padding:24px;margin-bottom:14px;text-align:center;color:#fff;box-shadow:0 4px 16px rgba(169,14,2,.25)}
 .rew-code{background:rgba(255,255,255,.9);border-radius:10px;padding:12px;margin-top:12px;font-size:20px;font-weight:800;color:var(--text);letter-spacing:3px;font-family:monospace}
 .pbar{background:var(--border);border-radius:10px;height:10px;margin-top:16px;overflow:hidden}
 .pfill{background:linear-gradient(90deg,var(--accent),var(--accent2));height:100%;border-radius:10px}
@@ -255,6 +257,46 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 .nw-day{min-width:50px;font-weight:700;color:var(--accent);font-size:11px}
 .nw-tasks{flex:1;color:var(--text2);line-height:1.4}
 .nw-count{font-weight:700;color:var(--text);font-size:13px;background:var(--card2);padding:2px 8px;border-radius:6px}
+
+/* Poster-style headings */
+.login h1,.hdr .nm,.dn-label,.mn span,.page-title,.ob-title,.modal-title,.sb-logo-text{letter-spacing:.5px}
+.sb .big{letter-spacing:.5px}
+
+/* ===== SHOW UP ===== */
+.su-hero{background:var(--accent);color:var(--lemon);border-radius:var(--radius2);padding:26px 22px 24px;text-align:center;box-shadow:var(--shadow2);position:relative;overflow:hidden;margin-bottom:14px}
+.su-hero:before{content:"";position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:rgba(255,251,212,.08);border-radius:50%}
+.su-hero .su-kicker{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;font-weight:800;opacity:.9;position:relative}
+.su-hero h2{font-family:var(--display);font-size:46px;line-height:.92;letter-spacing:1.5px;margin:6px 0 4px;text-transform:uppercase;position:relative}
+.su-hero .su-date{font-size:12px;opacity:.9;font-weight:600;position:relative}
+.su-flame{font-size:44px;margin:10px 0 2px;position:relative}
+.su-streaknum{font-family:var(--display);font-size:40px;line-height:1;letter-spacing:1px;position:relative}
+.su-btn{margin-top:18px;background:var(--ink);color:#fff;border:none;border-radius:14px;padding:18px 24px;font-family:var(--display);font-size:24px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;width:100%;box-shadow:0 6px 0 rgba(0,0,0,.4);transition:transform .1s,box-shadow .1s;position:relative}
+.su-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.su-btn.done{background:rgba(255,251,212,.18);color:var(--lemon);cursor:default;box-shadow:none;font-size:18px}
+.su-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.su-stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 4px;text-align:center;box-shadow:var(--shadow)}
+.su-stat .n{font-family:var(--display);font-size:24px;color:var(--accent);line-height:1;letter-spacing:.5px}
+.su-stat .n.gold{color:var(--warm)}
+.su-stat .l{font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;margin-top:5px}
+.chain{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;padding-bottom:14px}
+.chain .lk{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--card2);border:1.5px solid var(--border);position:relative;cursor:pointer;transition:all .15s}
+.chain .lk.hit{background:var(--accent);border-color:var(--accent);color:#fff}
+.chain .lk.frozen{background:var(--warm-bg);border-color:var(--warm2)}
+.chain .lk.today{outline:2.5px solid var(--ink);outline-offset:2px}
+.chain .lk .dd{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:8px;color:var(--text3);font-weight:700}
+.coin{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:var(--warm)}
+.su-note{width:100%;margin-top:10px}
+.duel-team{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.duel-team img{width:44px;height:44px;border-radius:50%;border:2px solid var(--border);object-fit:cover}
+.duel-team .dt-av{width:44px;height:44px;border-radius:50%;background:var(--card2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px}
+.duel-team .dt-name{font-size:11px;font-weight:700;color:var(--text);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.duel-team .dt-score{font-family:var(--display);font-size:30px;color:var(--accent);line-height:1}
+.duel-vs{font-family:var(--display);font-size:22px;color:var(--ink);align-self:center;padding:0 4px}
+.duel-team.lead .dt-score{color:var(--warm)}
+.duel-arena{display:flex;align-items:center;justify-content:space-between;background:var(--lemon);border:2px solid var(--accent);border-radius:14px;padding:16px 12px;margin-bottom:10px}
+.cam-box{width:100%;border-radius:12px;overflow:hidden;background:var(--ink)}
+.cam-box video,.cam-box img{width:100%;display:block}
+.verified-tag{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:800;color:#fff;background:var(--accent);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
 </style>
 </head>
 <body>
@@ -271,6 +313,7 @@ var DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 var DNF=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 var U=null,UD=null,CD=new Date(),CM=new Date(),PD={},LD="",SK=0,currentPage="dashboard";
+var SUD={coins:0,best:0,total:0,freezes:[]},SUMAP={},SUSTREAK=0,_camStream=null;
 
 function pad(n){return n<10?"0"+n:""+n;}
 function fm(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -336,7 +379,7 @@ function buildDayPills(container,selectedArr,preselected){
 }
 
 function showLogin(){
-  document.getElementById("root").innerHTML='<div class="login"><div class="login-logo">&#127807;</div><h1>1% Daily</h1><p>Build habits that last.<br>Track progress. Stay consistent.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:260px;margin-top:44px"><div class="feat"><span class="feat-icon">&#128197;</span> Day-specific task scheduling</div><div class="feat"><span class="feat-icon">&#127942;</span> Streak rewards &amp; milestones</div><div class="feat"><span class="feat-icon">&#128202;</span> Dashboard &amp; weekly overview</div><div class="feat"><span class="feat-icon">&#128229;</span> Import from Excel</div></div></div>';
+  document.getElementById("root").innerHTML='<div class="login"><div class="login-logo">&#128293;</div><h1>1% Daily</h1><p>Show up every day.<br>Keep the chain. Get 1% better.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:260px;margin-top:44px"><div class="feat"><span class="feat-icon">&#128293;</span> Daily Show Up streak &amp; chain</div><div class="feat"><span class="feat-icon">&#9876;&#65039;</span> Challenge your bestie 1v1</div><div class="feat"><span class="feat-icon">&#128197;</span> Day-specific task scheduling</div><div class="feat"><span class="feat-icon">&#127942;</span> Rewards, milestones &amp; coins</div><div class="feat"><span class="feat-icon">&#128229;</span> Import &amp; export via Excel</div></div></div>';
   document.getElementById("gl").onclick=function(){var p=new firebase.auth.GoogleAuthProvider();p.addScope("https://www.googleapis.com/auth/calendar.events");au.signInWithPopup(p).then(function(result){if(result.credential)window._gcalToken=result.credential.accessToken;}).catch(function(e){if(e.code==="auth/popup-blocked")au.signInWithRedirect(p);else ts("Login failed");});};
 }
 
@@ -503,10 +546,10 @@ function showApp(){
   var nm=(UD.name||"User").split(" ")[0],hr=new Date().getHours(),g=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
   var ph=UD.photo?'<img class="av" src="'+UD.photo+'" alt="">':'';
   var phSB=UD.photo?'<img src="'+UD.photo+'" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--border);object-fit:cover" alt="">':'';
-  document.getElementById("root").innerHTML='<div class="app-shell"><div class="sidebar"><div class="sb-logo"><span class="sb-logo-icon">&#127807;</span><span class="sb-logo-text">1% Daily</span></div><div class="sb-user">'+phSB+'<div class="sb-user-info"><div class="sb-user-name">'+es(UD.name||"User")+'</div><div class="sb-user-streak" id="stk2"></div></div></div><nav id="snav"><a href="#" data-p="dashboard"><span class="s-ico">&#127968;</span>Dashboard</a><a href="#" data-p="today"><span class="s-ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="s-ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="s-ico">&#128221;</span>Manage Tasks</a><a href="#" data-p="rewards"><span class="s-ico">&#127942;</span>Rewards</a></nav><div class="sb-footer"><button id="lob2">Sign Out</button></div></div><div class="main-area"><div class="hdr">'+ph+'<div class="info"><div class="lbl">1% Better Every Day</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="so" id="lob">Sign Out</button></div><div id="pc"></div></div></div>';
+  document.getElementById("root").innerHTML='<div class="app-shell"><div class="sidebar"><div class="sb-logo"><span class="sb-logo-icon">&#127807;</span><span class="sb-logo-text">1% Daily</span></div><div class="sb-user">'+phSB+'<div class="sb-user-info"><div class="sb-user-name">'+es(UD.name||"User")+'</div><div class="sb-user-streak" id="stk2"></div></div></div><nav id="snav"><a href="#" data-p="dashboard"><span class="s-ico">&#127968;</span>Dashboard</a><a href="#" data-p="showup"><span class="s-ico">&#128293;</span>Show Up</a><a href="#" data-p="today"><span class="s-ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="s-ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="s-ico">&#128221;</span>Manage Tasks</a><a href="#" data-p="rewards"><span class="s-ico">&#127942;</span>Rewards</a></nav><div class="sb-footer"><button id="lob2">Sign Out</button></div></div><div class="main-area"><div class="hdr">'+ph+'<div class="info"><div class="lbl">1% Better Every Day</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="so" id="lob">Sign Out</button></div><div id="pc"></div></div></div>';
   // Bottom nav for mobile
   var bn=document.createElement("div");bn.className="bnav";bn.id="bnav";
-  bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
+  bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="showup"><span class="ico">&#128293;</span>Show Up</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
   document.body.appendChild(bn);
   bn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
   // Sidebar nav
@@ -514,6 +557,8 @@ function showApp(){
   if(sn)sn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
   var lob=document.getElementById("lob");if(lob)lob.onclick=function(){if(confirm("Sign out?"))au.signOut();};
   var lob2=document.getElementById("lob2");if(lob2)lob2.onclick=function(){if(confirm("Sign out?"))au.signOut();};
+  SUD.coins=UD.showupCoins||0;SUD.best=UD.showupBest||0;SUD.freezes=UD.showupFreezes||[];UD.activeDuel=UD.activeDuel||"";UD.duelRole=UD.duelRole||"";
+  loadSU(function(){if(currentPage==="showup"||currentPage==="dashboard")renderPage();});
   currentPage="dashboard";renderPage();cS();
 }
 
@@ -523,9 +568,10 @@ function renderPage(){
   // Update sidebar nav
   var ss=document.querySelectorAll("#snav a");for(var i=0;i<ss.length;i++)ss[i].className=ss[i].dataset.p===currentPage?"on":"";
   var pc=document.getElementById("pc");if(!pc)return;
-  var titles={dashboard:"Dashboard",today:"Today",calendar:"Calendar",tasks:"Manage Tasks",rewards:"Rewards"};
+  var titles={dashboard:"Dashboard",showup:"Show Up",today:"Today",calendar:"Calendar",tasks:"Manage Tasks",rewards:"Rewards"};
   var titleHtml='<div class="page-title">'+(titles[currentPage]||"")+'</div>';
   if(currentPage==="dashboard")rDash(pc,titleHtml);
+  else if(currentPage==="showup"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rShowUp(sub);}
   else if(currentPage==="today"){LD="";pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rToday(sub);}
   else if(currentPage==="calendar"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rCal(sub);}
   else if(currentPage==="tasks"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rTasks(sub);}
@@ -535,7 +581,13 @@ function renderPage(){
 // DASHBOARD
 function rDash(el,titleHtml){
   var now=new Date(),ds=td(),tasks=getTasksForDate(ds);
+  var suShown=!!(SUMAP[ds]&&SUMAP[ds].done);
   var h=(titleHtml||'')+'<div class="dash-grid"><div class="dash-left">';
+  // Show Up banner
+  h+='<div class="su-hero" style="padding:20px" id="dashSU"><div class="su-kicker">Don\'t break the chain</div>';
+  if(suShown){h+='<div class="su-streaknum" style="font-size:34px;margin-top:6px">&#128293; '+SUSTREAK+' DAY'+(SUSTREAK===1?'':'S')+'</div><div class="su-date">Showed up today &#10003;</div>';}
+  else{h+='<div style="font-family:var(--display);font-size:30px;letter-spacing:1px;text-transform:uppercase;margin-top:6px">Show Up</div><div class="su-date">'+SUSTREAK+'-day streak on the line</div><button class="su-btn" id="dashSmash" style="margin-top:12px;font-size:18px;padding:12px">Smash It</button>';}
+  h+='</div>';
   // Today
   h+='<div class="card card-warm"><div class="card-t">Today — '+now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"})+'</div>';
   if(!tasks.length)h+='<div class="empty">No tasks today</div>';
@@ -567,6 +619,7 @@ function rDash(el,titleHtml){
   h+='<div class="quote">"'+QUOTES[doy%QUOTES.length]+'"</div>';
   h+='</div></div>';
   el.innerHTML=h;
+  var dSU=document.getElementById("dashSU");if(dSU)dSU.onclick=function(e){if(e.target.id==="dashSmash"){suCheckIn();return;}currentPage="showup";renderPage();};
   // Week grid click → show tasks inline
   function showDayPreview(targetId,dateStr){
     var panel=document.getElementById(targetId);if(!panel)return;
@@ -869,6 +922,181 @@ function showEdit(tid,pEl){
   document.getElementById("emC").onclick=function(){document.body.removeChild(ov);};
   ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
   document.getElementById("emS").onclick=function(){var n=(document.getElementById("emN").value||"").trim();if(!n){ts("Enter name");return;}if(!eD.length){ts("Select days");return;}task.name=n;task.desc=(document.getElementById("emD").value||"").trim();task.time=(document.getElementById("emT").value||"").trim();task.days=eD.sort();if(task.numId){var nl=document.getElementById("emNL");if(nl)task.numLabel=nl.value.trim();}document.body.removeChild(ov);saveUD(function(){ts("Updated");rTasks(pEl);});};
+}
+
+// ===== SHOW UP =====
+function isHit(ds){return (SUMAP[ds]&&SUMAP[ds].done)||(SUD.freezes&&SUD.freezes.indexOf(ds)!==-1);}
+function loadSU(cb){
+  if(!U){if(cb)cb();return;}
+  db.collection("users").doc(U.uid).collection("showups").get().then(function(qs){
+    SUMAP={};qs.forEach(function(d){SUMAP[d.id]=d.data();});computeSU();if(cb)cb();
+  }).catch(function(){computeSU();if(cb)cb();});
+}
+function computeSU(){
+  var s=0,d=new Date();
+  if(!isHit(td()))d.setDate(d.getDate()-1);
+  for(var i=0;i<400;i++){var ds=fm(d);if(isHit(ds)){s++;d.setDate(d.getDate()-1);}else break;}
+  SUSTREAK=s;if(s>(SUD.best||0))SUD.best=s;
+  var t=0;for(var k in SUMAP)if(SUMAP[k].done)t++;SUD.total=t;
+}
+function saveSUmeta(cb){
+  if(!U){if(cb)cb();return;}
+  db.collection("users").doc(U.uid).update({showupCoins:SUD.coins,showupBest:SUD.best,showupFreezes:SUD.freezes||[]}).then(function(){if(cb)cb();}).catch(function(){if(cb)cb();});
+}
+function doShowUp(note,thumb,verified){
+  var ds=td();
+  if(SUMAP[ds]&&SUMAP[ds].done){ts("Already showed up today");return;}
+  var rec={done:true,ts:Date.now(),note:note||"",verified:!!verified};
+  if(thumb)rec.thumb=thumb;
+  db.collection("users").doc(U.uid).collection("showups").doc(ds).set(rec).then(function(){
+    SUMAP[ds]=rec;SUD.coins=(SUD.coins||0)+5;computeSU();
+    saveSUmeta(function(){updateDuelScore();ts("&#128293; You showed up! +5 coins");renderPage();});
+  }).catch(function(e){ts("Error: "+e.message);});
+}
+function freezeDay(ds){
+  if((SUD.coins||0)<10){ts("Need 10 coins to repair");return;}
+  SUD.freezes=SUD.freezes||[];if(SUD.freezes.indexOf(ds)===-1)SUD.freezes.push(ds);
+  SUD.coins-=10;computeSU();saveSUmeta(function(){updateDuelScore();ts("&#10052;&#65039; Day repaired! Chain saved");renderPage();});
+}
+// Camera-verified check-in
+function suCheckIn(){
+  if(SUMAP[td()]&&SUMAP[td()].done){ts("Already showed up today");return;}
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal";
+  var h='<div class="modal-title"><span>Show Up Today</span><button class="modal-close" id="suX">&#10005;</button></div>';
+  h+='<div style="font-size:12px;color:var(--text3);margin-bottom:12px">Snap a proof selfie to verify (optional), add a note, then smash the button.</div>';
+  h+='<div class="cam-box" id="camBox" style="display:none"><video id="camV" autoplay playsinline muted></video><img id="camImg" style="display:none"><canvas id="camC" style="display:none"></canvas></div>';
+  h+='<div style="display:flex;gap:8px;margin:10px 0"><button class="btn btn-ghost btn-sm" id="camOpen">&#128247; Open Camera</button><button class="btn btn-primary btn-sm" id="camSnap" style="display:none">Capture</button><button class="btn btn-ghost btn-sm" id="camRetake" style="display:none">Retake</button></div>';
+  h+='<textarea id="suNote" class="su-note" placeholder="How did you show up today? (optional)" rows="2"></textarea>';
+  h+='<button class="btn btn-primary btn-full" id="suGo" style="margin-top:14px;font-size:15px">&#128293; I SHOWED UP</button>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  var thumb=null,verified=false;
+  var V=document.getElementById("camV"),IMG=document.getElementById("camImg"),C=document.getElementById("camC"),box=document.getElementById("camBox");
+  function stopCam(){if(_camStream){_camStream.getTracks().forEach(function(t){t.stop();});_camStream=null;}}
+  function close(){stopCam();if(ov.parentNode)document.body.removeChild(ov);}
+  document.getElementById("suX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+  document.getElementById("camOpen").onclick=function(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ts("Camera not available on this device");return;}
+    navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false}).then(function(st){
+      _camStream=st;V.srcObject=st;box.style.display="";V.style.display="";IMG.style.display="none";
+      document.getElementById("camOpen").style.display="none";document.getElementById("camSnap").style.display="";
+    }).catch(function(){ts("Camera permission denied");});
+  };
+  document.getElementById("camSnap").onclick=function(){
+    var w=V.videoWidth||480,hh=V.videoHeight||480,sz=240;C.width=sz;C.height=sz;
+    var ctx=C.getContext("2d"),side=Math.min(w,hh),sx=(w-side)/2,sy=(hh-side)/2;
+    ctx.drawImage(V,sx,sy,side,side,0,0,sz,sz);
+    thumb=C.toDataURL("image/jpeg",0.6);verified=true;
+    IMG.src=thumb;IMG.style.display="";V.style.display="none";stopCam();
+    this.style.display="none";document.getElementById("camRetake").style.display="";
+  };
+  document.getElementById("camRetake").onclick=function(){thumb=null;verified=false;IMG.style.display="none";this.style.display="none";document.getElementById("camOpen").style.display="";document.getElementById("camOpen").click();};
+  document.getElementById("suGo").onclick=function(){var n=(document.getElementById("suNote").value||"").trim();close();doShowUp(n,thumb,verified);};
+}
+// Duels (challenge a bestie)
+function genCode(){var ch="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",c="";for(var i=0;i<5;i++)c+=ch[Math.floor(Math.random()*ch.length)];return c;}
+function saveDuelRef(cb){db.collection("users").doc(U.uid).update({activeDuel:UD.activeDuel||"",duelRole:UD.duelRole||""}).then(function(){if(cb)cb();}).catch(function(){if(cb)cb();});}
+function createDuel(){
+  var code=genCode();
+  var doc={code:code,hostUid:U.uid,hostName:UD.name||"Me",hostPhoto:UD.photo||"",hostScore:SUSTREAK,guestUid:"",guestName:"",guestPhoto:"",guestScore:0,createdAt:Date.now()};
+  db.collection("duels").doc(code).set(doc).then(function(){
+    UD.activeDuel=code;UD.duelRole="host";saveDuelRef(function(){ts("Duel created! Share your code");renderPage();});
+  }).catch(function(){ts("Couldn't create duel — database access needed");});
+}
+function joinDuel(code){
+  code=(code||"").trim().toUpperCase();if(!code){ts("Enter a code");return;}
+  db.collection("duels").doc(code).get().then(function(d){
+    if(!d.exists){ts("Duel not found");return;}
+    var data=d.data();
+    if(data.hostUid===U.uid){UD.activeDuel=code;UD.duelRole="host";saveDuelRef(renderPage);return;}
+    if(data.guestUid&&data.guestUid!==U.uid){ts("Duel is full");return;}
+    db.collection("duels").doc(code).update({guestUid:U.uid,guestName:UD.name||"Me",guestPhoto:UD.photo||"",guestScore:SUSTREAK}).then(function(){
+      UD.activeDuel=code;UD.duelRole="guest";saveDuelRef(function(){ts("Joined the duel!");renderPage();});
+    }).catch(function(){ts("Couldn't join — database access needed");});
+  }).catch(function(){ts("Couldn't reach duel — database access needed");});
+}
+function leaveDuel(){UD.activeDuel="";UD.duelRole="";saveDuelRef(function(){ts("Left duel");renderPage();});}
+function updateDuelScore(){
+  if(!UD.activeDuel)return;
+  var f=UD.duelRole==="host"?{hostScore:SUSTREAK}:{guestScore:SUSTREAK};
+  db.collection("duels").doc(UD.activeDuel).update(f).catch(function(){});
+}
+function rShowUp(el){
+  var ds=td(),shown=!!(SUMAP[ds]&&SUMAP[ds].done),now=new Date();
+  var dlong=now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
+  var h='';
+  h+='<div class="su-hero"><div class="su-kicker">Don\'t break the chain</div>';
+  if(shown){
+    h+='<div class="su-flame">&#128293;</div><div class="su-streaknum">'+SUSTREAK+' DAY'+(SUSTREAK===1?'':'S')+'</div>';
+    h+='<h2>Showed Up!</h2><div class="su-date">'+dlong+'</div>';
+    var rec=SUMAP[ds];
+    if(rec&&rec.verified)h+='<div style="margin-top:10px"><span class="verified-tag">&#10003; Camera verified</span></div>';
+    h+='<div class="su-btn done">&#10003; You\'re here today</div>';
+  }else{
+    h+='<div class="su-flame">&#128064;</div><h2>Show Up</h2><div class="su-date">'+dlong+'</div>';
+    h+='<button class="su-btn" id="suMain">Smash It</button>';
+  }
+  h+='</div>';
+  h+='<div class="su-stats"><div class="su-stat"><div class="n">'+SUSTREAK+'</div><div class="l">Streak</div></div>';
+  h+='<div class="su-stat"><div class="n">'+(SUD.best||0)+'</div><div class="l">Best</div></div>';
+  h+='<div class="su-stat"><div class="n">'+(SUD.total||0)+'</div><div class="l">Total</div></div>';
+  h+='<div class="su-stat"><div class="n gold">'+(SUD.coins||0)+'</div><div class="l">Coins</div></div></div>';
+  h+='<div class="card"><div class="card-t">Your Chain — last 14 days</div><div class="chain">';
+  var days=[];for(var i=13;i>=0;i--){var dd=new Date();dd.setDate(dd.getDate()-i);days.push(fm(dd));}
+  for(var i=0;i<days.length;i++){var dsi=days[i],hit=SUMAP[dsi]&&SUMAP[dsi].done,fr=SUD.freezes&&SUD.freezes.indexOf(dsi)!==-1,isT=dsi===ds;
+    var cls="lk"+(hit?" hit":(fr?" frozen":""))+(isT?" today":"");
+    var ic=hit?"&#128293;":(fr?"&#10052;&#65039;":"");
+    h+='<div class="'+cls+'" data-sd="'+dsi+'"><span>'+ic+'</span><span class="dd">'+mk(dsi).getDate()+'</span></div>';
+  }
+  h+='</div>';
+  var y=new Date();y.setDate(y.getDate()-1);var yds=fm(y);
+  if(!isHit(yds)&&SUD.total>0){h+='<div style="margin-top:18px;padding:10px 12px;background:var(--warm-bg);border:1px solid var(--warm2);border-radius:10px;font-size:12px;color:var(--text2)">&#10052;&#65039; You missed '+mk(yds).toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"})+'. Repair it for <span class="coin">&#129689; 10</span> to save your chain.<button class="btn btn-warm btn-sm btn-full" id="suRepair" style="margin-top:8px">Repair Day (10 coins)</button></div>';}
+  h+='<div style="font-size:11px;color:var(--text3);margin-top:12px;text-align:center">&#128293; = showed up &nbsp; &#10052;&#65039; = repaired &nbsp; +5 coins each show-up</div></div>';
+  h+='<div class="card"><div class="card-t">Show-Up Milestones</div>';
+  for(var i=0;i<MILES.length;i++){var m=MILES[i],e=(SUD.best||0)>=m.d;h+='<div class="ms"><div style="font-size:24px;width:36px;text-align:center">'+m.i+'</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.n+'</div><div style="font-size:11px;color:var(--text3)">'+m.d+'-day chain</div></div><div style="font-size:11px;font-weight:700;color:'+(e?"var(--accent)":"var(--text4)")+'">'+(e?"&#10003; Unlocked":m.d+" days")+'</div></div>';}
+  h+='</div>';
+  h+='<div class="card"><div class="card-t">Challenge Your Bestie &#9876;&#65039;</div><div id="duelZone"><div class="empty">Loading duel...</div></div></div>';
+  el.innerHTML=h;
+  var mb=document.getElementById("suMain");if(mb)mb.onclick=suCheckIn;
+  var rp=document.getElementById("suRepair");if(rp)rp.onclick=function(){freezeDay(yds);};
+  el.querySelectorAll(".chain .lk").forEach(function(lk){lk.onclick=function(){var sd=this.dataset.sd,r=SUMAP[sd];
+    if(r&&r.done){var msg=mk(sd).toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"})+(r.verified?" &#10003; verified":"");if(r.note)msg+=" — "+es(r.note);ts(msg);}
+    else if(SUD.freezes&&SUD.freezes.indexOf(sd)!==-1)ts("Repaired day &#10052;&#65039;");
+    else if(sd===td())ts("Show up today to light this up!");
+    else if(mk(sd)<mk(td()))ts("Missed day");
+    else ts("Upcoming day");
+  };});
+  renderDuel();
+}
+function renderDuel(){
+  var z=document.getElementById("duelZone");if(!z)return;
+  if(!UD.activeDuel){
+    z.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:10px">Go head-to-head. Whoever keeps the longest show-up streak wins.</div>'+
+      '<button class="btn btn-primary btn-sm btn-full" id="duelCreate">Start a Duel</button>'+
+      '<div style="text-align:center;font-size:11px;color:var(--text4);margin:10px 0 8px">— or join with a code —</div>'+
+      '<div style="display:flex;gap:8px"><input id="duelCode" placeholder="ABCDE" style="text-transform:uppercase"><button class="btn btn-ghost btn-sm" id="duelJoin">Join</button></div>';
+    document.getElementById("duelCreate").onclick=createDuel;
+    document.getElementById("duelJoin").onclick=function(){joinDuel(document.getElementById("duelCode").value);};
+    return;
+  }
+  z.innerHTML='<div class="empty">Loading duel...</div>';
+  db.collection("duels").doc(UD.activeDuel).get().then(function(d){
+    if(!d.exists){z.innerHTML='<div class="empty">Duel ended</div><button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:8px">Clear</button>';document.getElementById("duelLeave").onclick=leaveDuel;return;}
+    var x=d.data(),me=UD.duelRole,hLead=x.hostScore>=x.guestScore;
+    var hAv=x.hostPhoto?'<img src="'+x.hostPhoto+'">':'<div class="dt-av">&#128100;</div>';
+    var gAv=x.guestUid?(x.guestPhoto?'<img src="'+x.guestPhoto+'">':'<div class="dt-av">&#128100;</div>'):'<div class="dt-av">&#8987;</div>';
+    var h='<div class="duel-arena">';
+    h+='<div class="duel-team'+(hLead&&x.guestUid?' lead':'')+'">'+hAv+'<div class="dt-name">'+es(x.hostName||"Host")+(me==="host"?" (You)":"")+'</div><div class="dt-score">'+x.hostScore+'</div></div>';
+    h+='<div class="duel-vs">VS</div>';
+    h+='<div class="duel-team'+(!hLead&&x.guestUid?' lead':'')+'">'+gAv+'<div class="dt-name">'+(x.guestUid?es(x.guestName||"Guest")+(me==="guest"?" (You)":""):"Waiting...")+'</div><div class="dt-score">'+(x.guestUid?x.guestScore:"–")+'</div></div>';
+    h+='</div>';
+    if(!x.guestUid){h+='<div style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:8px">Share this code with your bestie:</div><div class="rew-code" id="duelShareCode" style="cursor:pointer">'+x.code+'</div>';}
+    else{var lead=x.hostScore===x.guestScore?"It\'s a tie!":((x.hostScore>x.guestScore?x.hostName:x.guestName)+" leads!");h+='<div style="text-align:center;font-family:var(--display);font-size:16px;color:var(--accent);margin:4px 0 8px;letter-spacing:.5px">'+es(lead)+'</div>';}
+    h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" id="duelRefresh" style="flex:1">&#8635; Refresh</button><button class="btn btn-ghost btn-sm" id="duelLeave" style="flex:1">Leave</button></div>';
+    z.innerHTML=h;
+    var sc=document.getElementById("duelShareCode");if(sc)sc.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(x.code);ts("Code copied: "+x.code);};
+    document.getElementById("duelRefresh").onclick=function(){updateDuelScore();renderDuel();};
+    document.getElementById("duelLeave").onclick=function(){if(confirm("Leave this duel?"))leaveDuel();};
+  }).catch(function(){z.innerHTML='<div style="font-size:12px;color:var(--text3)">Duels need Firestore access for the <code>duels</code> collection. Your solo streak still works perfectly.</div><button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:8px">Clear</button>';var dl=document.getElementById("duelLeave");if(dl)dl.onclick=leaveDuel;});
 }
 
 // REWARDS
