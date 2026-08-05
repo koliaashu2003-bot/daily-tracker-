@@ -434,7 +434,9 @@ function buildDayPills(container,selectedArr,preselected){
   };
 }
 
+function rmBnav(){var b=document.getElementById("bnav");if(b)b.parentNode.removeChild(b);}
 function showLogin(){
+  rmBnav();
   document.getElementById("root").innerHTML='<div class="login"><div class="login-logo">&#128293;</div><h1>1% Daily</h1><p>Show up every day.<br>Keep the chain. Get 1% better.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:260px;margin-top:44px"><div class="feat"><span class="feat-icon">&#128293;</span> Daily Show Up streak &amp; chain</div><div class="feat"><span class="feat-icon">&#9876;&#65039;</span> Challenge your bestie 1v1</div><div class="feat"><span class="feat-icon">&#128197;</span> Day-specific task scheduling</div><div class="feat"><span class="feat-icon">&#127942;</span> Rewards, milestones &amp; coins</div><div class="feat"><span class="feat-icon">&#128229;</span> Import &amp; export via Excel</div></div></div>';
   document.getElementById("gl").onclick=function(){var p=new firebase.auth.GoogleAuthProvider();p.addScope("https://www.googleapis.com/auth/calendar.events");au.signInWithPopup(p).then(function(result){if(result.credential)window._gcalToken=result.credential.accessToken;}).catch(function(e){if(e.code==="auth/popup-blocked")au.signInWithRedirect(p);else ts("Login failed");});};
 }
@@ -442,6 +444,7 @@ function showLogin(){
 // ONBOARDING
 var obTasks=[];
 function showOnboarding(){
+  rmBnav();
   var root=document.getElementById("root");
   var h='<div class="onboard"><div class="ob-step">Setup</div><div class="ob-title">Create your daily habits</div><div class="ob-sub">Add tasks and pick which days they appear. You can always edit later.</div>';
   h+='<div class="card"><label style="margin-top:0">Your Name</label><input id="obName" placeholder="Your name" value="'+(U.displayName||"")+'"></div>';
@@ -604,7 +607,7 @@ function showApp(){
   var phSB=UD.photo?'<img src="'+UD.photo+'" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--border);object-fit:cover" alt="">':'';
   document.getElementById("root").innerHTML='<div class="app-shell"><div class="sidebar"><div class="sb-logo"><span class="sb-logo-icon">&#127807;</span><span class="sb-logo-text">1% Daily</span></div><div class="sb-user">'+phSB+'<div class="sb-user-info"><div class="sb-user-name">'+es(UD.name||"User")+'</div><div class="sb-user-streak" id="stk2"></div></div></div><nav id="snav"><a href="#" data-p="dashboard"><span class="s-ico">&#127968;</span>Dashboard</a><a href="#" data-p="showup"><span class="s-ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="s-ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="s-ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="s-ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="s-ico">&#128221;</span>Manage Tasks</a><a href="#" data-p="rewards"><span class="s-ico">&#127942;</span>Rewards</a></nav><div class="sb-footer"><button id="lob2">Sign Out</button></div></div><div class="main-area"><div class="hdr">'+ph+'<div class="info"><div class="lbl">1% Better Every Day</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="so" id="lob">Sign Out</button></div><div id="pc"></div></div></div>';
   // Bottom nav for mobile
-  var bn=document.createElement("div");bn.className="bnav";bn.id="bnav";
+  rmBnav();var bn=document.createElement("div");bn.className="bnav";bn.id="bnav";
   bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="showup"><span class="ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
   document.body.appendChild(bn);
   bn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
