@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#A90E02">
-<title>1% Daily · Show Up</title>
+<title>Kairos · Show Up Daily</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -278,12 +278,15 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 .su-stat .n{font-family:var(--display);font-size:24px;color:var(--accent);line-height:1;letter-spacing:.5px}
 .su-stat .n.gold{color:var(--warm)}
 .su-stat .l{font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;margin-top:5px}
-.chain{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;padding-bottom:14px}
-.chain .lk{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--card2);border:1.5px solid var(--border);position:relative;cursor:pointer;transition:all .15s}
-.chain .lk.hit{background:var(--accent);border-color:var(--accent);color:#fff}
+.chain{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;justify-content:center}
+.chain .lk{width:38px;height:44px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--card2);border:1.5px solid var(--border);cursor:pointer;transition:all .15s}
+.chain .lk .ic{font-size:15px;line-height:1;height:16px;display:flex;align-items:center;justify-content:center}
+.chain .lk .dd{font-size:10px;line-height:1;font-weight:800;color:var(--text2)}
+.chain .lk.hit{background:var(--accent);border-color:var(--accent)}
+.chain .lk.hit .dd{color:#fff}
 .chain .lk.frozen{background:var(--warm-bg);border-color:var(--warm2)}
+.chain .lk.frozen .dd{color:var(--warm)}
 .chain .lk.today{outline:2.5px solid var(--ink);outline-offset:2px}
-.chain .lk .dd{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:8px;color:var(--text3);font-weight:700}
 .coin{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:var(--warm)}
 .su-note{width:100%;margin-top:10px}
 .duel-team{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
@@ -353,6 +356,51 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 .rule-opt.on .ro-dot{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px #fff}
 .ro-t{font-size:13px;font-weight:700;color:var(--text)}
 .ro-d{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ===== 3D PAGE TRANSITION (all pages) ===== */
+#pc{transform-origin:center top}
+.pgin{animation:pgIn .55s cubic-bezier(.2,.75,.25,1) both}
+@keyframes pgIn{from{opacity:0;transform:perspective(1100px) rotateX(9deg) translateY(26px) scale(.98)}to{opacity:1;transform:perspective(1100px) rotateX(0) translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.pgin{animation:none}}
+
+/* ===== HAMBURGER MENU + DRAWER ===== */
+.menu-btn{background:var(--card2);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;flex-shrink:0;transition:all .15s}
+.menu-btn:hover{background:var(--border)}
+.menu-btn span{display:block;width:18px;height:2.5px;background:var(--accent);border-radius:2px;transition:all .2s}
+.sb-menu-btn{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);padding:11px 16px;border-radius:10px}
+.sb-menu-btn:hover{background:var(--card2);color:var(--text)}
+.drawer-overlay{position:fixed;inset:0;background:rgba(44,20,4,.5);z-index:200;opacity:0;transition:opacity .25s;backdrop-filter:blur(2px)}
+.drawer-overlay.show{opacity:1}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:82%;max-width:340px;background:var(--bg2);box-shadow:-10px 0 40px rgba(80,10,0,.25);z-index:201;transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;overflow-y:auto;perspective:1000px}
+.drawer.show{transform:translateX(0)}
+.drawer-head{background:var(--accent);color:var(--lemon);padding:28px 22px 22px;position:relative}
+.drawer-head .dh-close{position:absolute;top:14px;right:14px;background:rgba(255,251,212,.16);border:none;color:var(--lemon);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer}
+.drawer-head img,.drawer-head .dh-av{width:60px;height:60px;border-radius:50%;border:2.5px solid rgba(255,251,212,.5);object-fit:cover;background:rgba(255,251,212,.18);display:flex;align-items:center;justify-content:center;font-size:28px}
+.drawer-head .dh-name{font-family:var(--display);font-size:22px;letter-spacing:.5px;margin-top:12px;text-transform:uppercase}
+.drawer-head .dh-mail{font-size:11px;opacity:.85;margin-top:2px;word-break:break-all}
+.drawer-nav{padding:12px}
+.drawer-item{display:flex;align-items:center;gap:14px;padding:15px 16px;border-radius:12px;cursor:pointer;transition:all .18s;transform-style:preserve-3d;animation:drawerItem .4s both}
+.drawer-item:hover{background:var(--card2);transform:translateX(4px)}
+.drawer-item .di-ic{font-size:22px;width:26px;text-align:center}
+.drawer-item .di-t{font-size:14px;font-weight:700;color:var(--text)}
+.drawer-item .di-s{font-size:11px;color:var(--text3);margin-top:1px}
+.drawer-item .di-arrow{margin-left:auto;color:var(--text4);font-size:18px}
+@keyframes drawerItem{from{opacity:0;transform:translateX(30px) rotateY(-20deg)}to{opacity:1;transform:none}}
+.drawer-foot{margin-top:auto;padding:16px 22px;font-size:10px;color:var(--text4);text-align:center;border-top:1px solid var(--border)}
+
+/* ===== BUY ME A COFFEE ===== */
+.coffee-hero{text-align:center;padding:6px 0 4px}
+.coffee-cup{font-size:56px;display:inline-block;animation:float3d 3.5s ease-in-out infinite;filter:drop-shadow(0 10px 12px rgba(140,10,0,.25))}
+.qr-box{background:#fff;border:6px solid var(--ink);border-radius:20px;padding:16px;width:230px;max-width:78%;margin:16px auto;box-shadow:0 16px 30px rgba(20,18,16,.25);transform-style:preserve-3d;animation:qrFloat 5s ease-in-out infinite}
+.qr-box img{width:100%;display:block;border-radius:6px}
+.qr-ph{width:100%;aspect-ratio:1;border-radius:10px;background:repeating-conic-gradient(var(--ink) 0% 25%,#fff 0% 50%) 50%/22px 22px;display:flex;align-items:center;justify-content:center;position:relative}
+.qr-ph:after{content:"\2615";position:absolute;font-size:34px;background:#fff;padding:8px 10px;border-radius:10px}
+@keyframes qrFloat{0%,100%{transform:rotateY(-8deg) rotateX(3deg)}50%{transform:rotateY(8deg) rotateX(-3deg)}}
+.coffee-note{font-size:13px;color:var(--text2);line-height:1.6;max-width:300px;margin:8px auto 0}
+
+/* Terms */
+.terms h4{font-family:var(--sans);font-size:13px;font-weight:800;color:var(--text);margin:16px 0 5px;text-transform:uppercase;letter-spacing:.5px}
+.terms p{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -370,6 +418,7 @@ var DNF=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
 
 var U=null,UD=null,CD=new Date(),CM=new Date(),PD={},LD="",SK=0,currentPage="dashboard";
 var SUD={coins:0,best:0,total:0,freezes:[]},SUMAP={},SUSTREAK=0,_camStream=null;
+var COFFEE_QR="coffee-qr.png";// path to the Buy Me a Coffee QR image (falls back to a placeholder if missing)
 
 function pad(n){return n<10?"0"+n:""+n;}
 function fm(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -437,7 +486,7 @@ function buildDayPills(container,selectedArr,preselected){
 function rmBnav(){var b=document.getElementById("bnav");if(b)b.parentNode.removeChild(b);}
 function showLogin(){
   rmBnav();
-  document.getElementById("root").innerHTML='<div class="login"><div class="login-logo">&#128293;</div><h1>1% Daily</h1><p>Show up every day.<br>Keep the chain. Get 1% better.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:260px;margin-top:44px"><div class="feat"><span class="feat-icon">&#128293;</span> Daily Show Up streak &amp; chain</div><div class="feat"><span class="feat-icon">&#9876;&#65039;</span> Challenge your bestie 1v1</div><div class="feat"><span class="feat-icon">&#128197;</span> Day-specific task scheduling</div><div class="feat"><span class="feat-icon">&#127942;</span> Rewards, milestones &amp; coins</div><div class="feat"><span class="feat-icon">&#128229;</span> Import &amp; export via Excel</div></div></div>';
+  document.getElementById("root").innerHTML='<div class="login"><div class="login-logo">&#128293;</div><h1>Kairos</h1><p>Seize the moment.<br>Show up daily. Keep the chain.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:260px;margin-top:44px"><div class="feat"><span class="feat-icon">&#128293;</span> Daily Show Up streak &amp; chain</div><div class="feat"><span class="feat-icon">&#9876;&#65039;</span> Challenge your bestie 1v1</div><div class="feat"><span class="feat-icon">&#128197;</span> Day-specific task scheduling</div><div class="feat"><span class="feat-icon">&#127942;</span> Rewards, milestones &amp; coins</div><div class="feat"><span class="feat-icon">&#128229;</span> Import &amp; export via Excel</div></div></div>';
   document.getElementById("gl").onclick=function(){var p=new firebase.auth.GoogleAuthProvider();au.signInWithPopup(p).catch(function(e){if(e.code==="auth/popup-blocked")au.signInWithRedirect(p);else if(e.code!=="auth/popup-closed-by-user"&&e.code!=="auth/cancelled-popup-request")ts("Login failed: "+(e.message||e.code));});};
 }
 
@@ -605,7 +654,7 @@ function showApp(){
   var nm=(UD.name||"User").split(" ")[0],hr=new Date().getHours(),g=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
   var ph=UD.photo?'<img class="av" src="'+UD.photo+'" alt="">':'';
   var phSB=UD.photo?'<img src="'+UD.photo+'" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--border);object-fit:cover" alt="">':'';
-  document.getElementById("root").innerHTML='<div class="app-shell"><div class="sidebar"><div class="sb-logo"><span class="sb-logo-icon">&#127807;</span><span class="sb-logo-text">1% Daily</span></div><div class="sb-user">'+phSB+'<div class="sb-user-info"><div class="sb-user-name">'+es(UD.name||"User")+'</div><div class="sb-user-streak" id="stk2"></div></div></div><nav id="snav"><a href="#" data-p="dashboard"><span class="s-ico">&#127968;</span>Dashboard</a><a href="#" data-p="showup"><span class="s-ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="s-ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="s-ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="s-ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="s-ico">&#128221;</span>Manage Tasks</a><a href="#" data-p="rewards"><span class="s-ico">&#127942;</span>Rewards</a></nav><div class="sb-footer"><button id="lob2">Sign Out</button></div></div><div class="main-area"><div class="hdr">'+ph+'<div class="info"><div class="lbl">1% Better Every Day</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="so" id="lob">Sign Out</button></div><div id="pc"></div></div></div>';
+  document.getElementById("root").innerHTML='<div class="app-shell"><div class="sidebar"><div class="sb-logo"><span class="sb-logo-icon">&#128293;</span><span class="sb-logo-text">Kairos</span></div><div class="sb-user">'+phSB+'<div class="sb-user-info"><div class="sb-user-name">'+es(UD.name||"User")+'</div><div class="sb-user-streak" id="stk2"></div></div></div><nav id="snav"><a href="#" data-p="dashboard"><span class="s-ico">&#127968;</span>Dashboard</a><a href="#" data-p="showup"><span class="s-ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="s-ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="s-ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="s-ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="s-ico">&#128221;</span>Manage Tasks</a><a href="#" data-p="rewards"><span class="s-ico">&#127942;</span>Rewards</a></nav><div class="sb-footer"><button class="sb-menu-btn" id="sbMenu"><span style="font-size:16px">&#9776;</span> Menu &amp; Profile</button></div></div><div class="main-area"><div class="hdr">'+ph+'<div class="info"><div class="lbl">Seize the moment</div><div class="nm">'+g+", "+es(nm)+'</div><div class="stk" id="stk"></div></div><button class="menu-btn" id="hdrMenu" title="Menu"><span></span><span></span><span></span></button></div><div id="pc"></div></div></div>';
   // Bottom nav for mobile
   rmBnav();var bn=document.createElement("div");bn.className="bnav";bn.id="bnav";
   bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="showup"><span class="ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
@@ -614,8 +663,8 @@ function showApp(){
   // Sidebar nav
   var sn=document.getElementById("snav");
   if(sn)sn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
-  var lob=document.getElementById("lob");if(lob)lob.onclick=function(){if(confirm("Sign out?"))au.signOut();};
-  var lob2=document.getElementById("lob2");if(lob2)lob2.onclick=function(){if(confirm("Sign out?"))au.signOut();};
+  var hm=document.getElementById("hdrMenu");if(hm)hm.onclick=openMenu;
+  var sm=document.getElementById("sbMenu");if(sm)sm.onclick=openMenu;
   SUD.coins=UD.showupCoins||0;SUD.best=UD.showupBest||0;SUD.freezes=UD.showupFreezes||[];UD.activeDuel=UD.activeDuel||"";UD.duelRole=UD.duelRole||"";UD.goals=UD.goals||[];
   loadSU(function(){if(currentPage==="showup"||currentPage==="dashboard")renderPage();});
   currentPage="dashboard";renderPage();cS();
@@ -636,6 +685,77 @@ function renderPage(){
   else if(currentPage==="calendar"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rCal(sub);}
   else if(currentPage==="tasks"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rTasks(sub);}
   else if(currentPage==="rewards"){pc.innerHTML=titleHtml;var sub=document.createElement("div");pc.appendChild(sub);rRew(sub);}
+  // 3D entrance animation on every page
+  pc.classList.remove("pgin");void pc.offsetWidth;pc.classList.add("pgin");
+}
+
+// ===== HAMBURGER MENU + DRAWER =====
+function openMenu(){
+  var ov=document.createElement("div");ov.className="drawer-overlay";
+  var dw=document.createElement("div");dw.className="drawer";
+  var av=UD.photo?'<img src="'+UD.photo+'" alt="">':'<div class="dh-av">&#128100;</div>';
+  var items=[
+    {ic:"&#128100;",t:"Profile",s:"Your account & stats",fn:"profile"},
+    {ic:"&#128203;",t:"Terms & Conditions",s:"How Kairos works & your data",fn:"terms"},
+    {ic:"&#9749;",t:"Buy Me a Coffee",s:"Support the app ❤️",fn:"coffee"},
+    {ic:"&#128274;",t:"Sign Out",s:"See you tomorrow",fn:"signout"}
+  ];
+  var h='<div class="drawer-head"><button class="dh-close" id="dwClose">&#10005;</button>'+av+'<div class="dh-name">'+es((UD.name||"User").split(" ")[0])+'</div><div class="dh-mail">'+es(UD.email||"")+'</div></div><div class="drawer-nav">';
+  for(var i=0;i<items.length;i++){var it=items[i];h+='<div class="drawer-item" data-fn="'+it.fn+'" style="animation-delay:'+(i*0.06+0.1)+'s"><div class="di-ic">'+it.ic+'</div><div><div class="di-t">'+it.t+'</div><div class="di-s">'+it.s+'</div></div><div class="di-arrow">&#8250;</div></div>';}
+  h+='</div><div class="drawer-foot">Kairos &middot; Seize the moment &#128293;</div>';
+  dw.innerHTML=h;document.body.appendChild(ov);document.body.appendChild(dw);
+  requestAnimationFrame(function(){ov.classList.add("show");dw.classList.add("show");});
+  function close(){ov.classList.remove("show");dw.classList.remove("show");setTimeout(function(){if(ov.parentNode)ov.remove();if(dw.parentNode)dw.remove();},300);}
+  ov.onclick=close;document.getElementById("dwClose").onclick=close;
+  dw.querySelectorAll(".drawer-item").forEach(function(el){el.onclick=function(){var fn=this.dataset.fn;close();setTimeout(function(){
+    if(fn==="profile")openProfile();else if(fn==="terms")openTerms();else if(fn==="coffee")openCoffee();else if(fn==="signout"){if(confirm("Sign out?"))au.signOut();}
+  },220);};});
+}
+function openProfile(){
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
+  var av=UD.photo?'<img src="'+UD.photo+'" style="width:76px;height:76px;border-radius:50%;border:3px solid var(--accent);object-fit:cover">':'<div style="width:76px;height:76px;border-radius:50%;background:var(--accent);color:var(--lemon);display:flex;align-items:center;justify-content:center;font-size:34px">&#128100;</div>';
+  var goalsN=(UD.goals||[]).length,tasksN=((UD.tasks||[]).filter(function(t){return!t.archived;})).length;
+  var stats=[["&#128293;",SUSTREAK,"Show Up"],["&#127942;",SUD.best||0,"Best"],["&#10003;",SUD.total||0,"Total"],["&#129689;",SUD.coins||0,"Coins"],["&#127919;",goalsN,"Goals"],["&#128221;",tasksN,"Tasks"]];
+  var h='<div class="detail-3d"><div class="modal-title"><span>Profile</span><button class="modal-close" id="pfX">&#10005;</button></div>';
+  h+='<div style="text-align:center;margin-bottom:16px">'+av+'<div style="font-family:var(--display);font-size:24px;letter-spacing:.5px;margin-top:10px">'+es(UD.name||"User")+'</div><div style="font-size:12px;color:var(--text3);margin-top:2px">'+es(UD.email||"")+'</div></div>';
+  h+='<div class="su-stats" style="grid-template-columns:repeat(3,1fr)">';
+  for(var i=0;i<stats.length;i++)h+='<div class="su-stat"><div class="n" style="font-size:20px">'+stats[i][1]+'</div><div class="l">'+stats[i][2]+'</div></div>';
+  h+='</div>';
+  h+='<label style="margin-top:16px">Display name</label><div style="display:flex;gap:8px"><input id="pfName" value="'+es(UD.name||"")+'"><button class="btn btn-primary btn-sm" id="pfSave" style="flex-shrink:0">Save</button></div>';
+  h+='<button class="btn btn-ghost btn-full" id="pfOut" style="margin-top:14px;color:var(--danger)">Sign Out</button></div>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  function close(){if(ov.parentNode)ov.remove();}
+  document.getElementById("pfX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+  document.getElementById("pfOut").onclick=function(){if(confirm("Sign out?"))au.signOut();};
+  document.getElementById("pfSave").onclick=function(){var nm=(document.getElementById("pfName").value||"").trim();if(!nm){ts("Enter a name");return;}UD.name=nm;db.collection("users").doc(U.uid).update({name:nm}).then(function(){var a=document.querySelector(".hdr .nm"),b=document.querySelector(".sb-user-name");if(a)a.textContent=(new Date().getHours()<12?"Good Morning":new Date().getHours()<17?"Good Afternoon":"Good Evening")+", "+nm.split(" ")[0];if(b)b.textContent=nm;ts("Profile updated");close();}).catch(function(e){ts("Error: "+e.message);});};
+}
+function openTerms(){
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
+  var h='<div class="detail-3d"><div class="modal-title"><span>Terms & Privacy</span><button class="modal-close" id="tcX">&#10005;</button></div><div class="terms">';
+  h+='<p style="color:var(--text3)">Last updated: today. By using Kairos you agree to the points below.</p>';
+  h+='<h4>What Kairos is</h4><p>Kairos is a personal habit and goal tracker. You show up each day, keep your streak, set goals and track tasks. It is provided as-is, for your own personal use, with no guarantee of uninterrupted service.</p>';
+  h+='<h4>Your account</h4><p>You sign in with Google. We only use your name, email and profile photo to identify your account and personalise the app. You are responsible for activity under your account.</p>';
+  h+='<h4>Your data</h4><p>Your tasks, goals, show-ups and progress are stored securely in the app’s database and are tied to your account. Your data is yours — you can export it from the Calendar page or delete goals and tasks anytime.</p>';
+  h+='<h4>What we don’t do</h4><p>We don’t sell your data or show ads. Camera photos you take for a show-up are stored only as small thumbnails on your own account and are never shared.</p>';
+  h+='<h4>Duels & sharing</h4><p>If you start a duel, your name, photo and streak count are visible to the person you share the code with. Only share codes with people you trust.</p>';
+  h+='<h4>Fair use</h4><p>Don’t abuse, reverse-engineer or attempt to break the service. We may update these terms as the app evolves; continued use means you accept the latest version.</p>';
+  h+='<p style="margin-top:14px;color:var(--text3)">Questions? Reach out via the Feedback box on the Rewards page.</p>';
+  h+='</div><button class="btn btn-primary btn-full" id="tcOk" style="margin-top:16px">Got it</button></div>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  function close(){if(ov.parentNode)ov.remove();}
+  document.getElementById("tcX").onclick=close;document.getElementById("tcOk").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+}
+function openCoffee(){
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
+  var qr='<div class="qr-box"><img src="'+COFFEE_QR+'" alt="Buy me a coffee QR" onerror="this.parentNode.innerHTML=\'<div class=&quot;qr-ph&quot;></div>\'"></div>';
+  var h='<div class="detail-3d"><div class="modal-title"><span>Buy Me a Coffee</span><button class="modal-close" id="cfX">&#10005;</button></div>';
+  h+='<div class="coffee-hero"><span class="coffee-cup">&#9749;</span><div style="font-family:var(--display);font-size:24px;letter-spacing:.5px;color:var(--accent);margin-top:8px;text-transform:uppercase">Fuel the streak</div></div>';
+  h+=qr;
+  h+='<div class="coffee-note">If Kairos helps you show up, a small coffee keeps it going. Scan the code with any UPI / payment app to support — thank you! &#128293;&#10084;&#65039;</div>';
+  h+='<button class="btn btn-primary btn-full" id="cfOk" style="margin-top:16px">Maybe later</button></div>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  function close(){if(ov.parentNode)ov.remove();}
+  document.getElementById("cfX").onclick=close;document.getElementById("cfOk").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
 }
 
 // DASHBOARD
@@ -778,7 +898,7 @@ function sRS(rows){var t2=0,tp=0,ac=0,pf=0;for(var i=0;i<rows.length;i++){t2+=ro
   document.getElementById("cRep").innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="sb"><div class="big" style="color:'+col+'">'+pct+'%</div><div class="sm">Overall</div></div><div class="sb"><div class="big" style="color:var(--accent)">'+ac+'</div><div class="sm">Active Days</div></div><div class="sb"><div class="big" style="color:var(--warm)">'+pf+'</div><div class="sm">Perfect Days</div></div><div class="sb"><div class="big">'+rows.length+'</div><div class="sm">Tracked</div></div></div>';window._rr=rows;}
 function dlX(y,m){var rows=window._rr;if(!rows||!rows.length){ts("No data");return;}var all=(UD.tasks||[]).concat(UD.archivedTasks||[]);
   var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><style>table{border-collapse:collapse;font-family:Calibri;font-size:11px}td,th{border:1px solid #D9D9D9;padding:6px 8px;text-align:center}.t{font-size:18px;font-weight:bold;color:#7C8C6E;border:none;text-align:left}.hab{text-align:left;font-weight:600;background:#FAF5EE}.dh{background:#F6F1EB;font-weight:bold;font-size:10px}.y{background:#EEF2E9;color:#5A6A4C;font-weight:bold}.n{color:#DDD}.pg{background:#EEF2E9;color:#5A6A4C;font-weight:bold}.po{background:#FDF0E4;color:#C4956A;font-weight:bold}.pb{background:#FCEAE7;color:#C2665A;font-weight:bold}</style></head><body>';
-  var cols=rows.length+2;h+='<table><tr><td class="t" colspan="'+cols+'">1% Daily Tracker</td></tr><tr><td style="border:none;color:#A39483;text-align:left" colspan="'+cols+'">'+UD.name+' | '+new Date(y,m).toLocaleDateString("en-IN",{month:"long",year:"numeric"})+'</td></tr><tr><td colspan="'+cols+'" style="border:none"></td></tr>';
+  var cols=rows.length+2;h+='<table><tr><td class="t" colspan="'+cols+'">Kairos — Progress</td></tr><tr><td style="border:none;color:#A39483;text-align:left" colspan="'+cols+'">'+UD.name+' | '+new Date(y,m).toLocaleDateString("en-IN",{month:"long",year:"numeric"})+'</td></tr><tr><td colspan="'+cols+'" style="border:none"></td></tr>';
   h+='<tr><th class="dh" style="text-align:left;min-width:180px">Task</th>';for(var i=0;i<rows.length;i++){var d=mk(rows[i].ds);h+='<th class="dh">'+d.getDate()+'<br><span style="font-size:8px;color:#A39483">'+DN[d.getDay()]+'</span></th>';}h+='<th class="dh">%</th></tr>';
   for(var i=0;i<all.length;i++){var t=all[i],dn=0,sh=0;h+='<tr><td class="hab">'+t.name+'</td>';for(var j=0;j<rows.length;j++){var ac=getAllTasksForDate(rows[j].ds).some(function(x){return x.id===t.id;}),on=ac&&!!rows[j].obj[t.id];if(on)dn++;if(ac)sh++;h+='<td class="'+(ac?(on?"y":"n"):"n")+'">'+(ac?(on?"✓":"-"):".")+'</td>';}var p=sh?Math.round(dn/sh*100):0;h+='<td class="'+(p>=70?"pg":p>=40?"po":"pb")+'">'+p+'%</td></tr>';}
   h+='</table></body></html>';var blob=new Blob([h],{type:"application/vnd.ms-excel"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Progress_"+y+"-"+pad(m+1)+".xls";document.body.appendChild(a);a.click();document.body.removeChild(a);ts("Downloaded!");}
@@ -942,7 +1062,7 @@ function rShowUp(el){
   for(var i=0;i<days.length;i++){var dsi=days[i],hit=SUMAP[dsi]&&SUMAP[dsi].done,fr=SUD.freezes&&SUD.freezes.indexOf(dsi)!==-1,isT=dsi===ds;
     var cls="lk"+(hit?" hit":(fr?" frozen":""))+(isT?" today":"");
     var ic=hit?"&#128293;":(fr?"&#10052;&#65039;":"");
-    h+='<div class="'+cls+'" data-sd="'+dsi+'"><span>'+ic+'</span><span class="dd">'+mk(dsi).getDate()+'</span></div>';
+    h+='<div class="'+cls+'" data-sd="'+dsi+'"><span class="ic">'+ic+'</span><span class="dd">'+mk(dsi).getDate()+'</span></div>';
   }
   h+='</div>';
   var y=new Date();y.setDate(y.getDate()-1);var yds=fm(y);
