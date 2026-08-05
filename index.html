@@ -278,12 +278,15 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 .su-stat .n{font-family:var(--display);font-size:24px;color:var(--accent);line-height:1;letter-spacing:.5px}
 .su-stat .n.gold{color:var(--warm)}
 .su-stat .l{font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;margin-top:5px}
-.chain{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;padding-bottom:14px}
-.chain .lk{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--card2);border:1.5px solid var(--border);position:relative;cursor:pointer;transition:all .15s}
-.chain .lk.hit{background:var(--accent);border-color:var(--accent);color:#fff}
+.chain{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;justify-content:center}
+.chain .lk{width:38px;height:44px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--card2);border:1.5px solid var(--border);cursor:pointer;transition:all .15s}
+.chain .lk .ic{font-size:15px;line-height:1;height:16px;display:flex;align-items:center;justify-content:center}
+.chain .lk .dd{font-size:10px;line-height:1;font-weight:800;color:var(--text2)}
+.chain .lk.hit{background:var(--accent);border-color:var(--accent)}
+.chain .lk.hit .dd{color:#fff}
 .chain .lk.frozen{background:var(--warm-bg);border-color:var(--warm2)}
+.chain .lk.frozen .dd{color:var(--warm)}
 .chain .lk.today{outline:2.5px solid var(--ink);outline-offset:2px}
-.chain .lk .dd{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:8px;color:var(--text3);font-weight:700}
 .coin{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:var(--warm)}
 .su-note{width:100%;margin-top:10px}
 .duel-team{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
@@ -942,7 +945,7 @@ function rShowUp(el){
   for(var i=0;i<days.length;i++){var dsi=days[i],hit=SUMAP[dsi]&&SUMAP[dsi].done,fr=SUD.freezes&&SUD.freezes.indexOf(dsi)!==-1,isT=dsi===ds;
     var cls="lk"+(hit?" hit":(fr?" frozen":""))+(isT?" today":"");
     var ic=hit?"&#128293;":(fr?"&#10052;&#65039;":"");
-    h+='<div class="'+cls+'" data-sd="'+dsi+'"><span>'+ic+'</span><span class="dd">'+mk(dsi).getDate()+'</span></div>';
+    h+='<div class="'+cls+'" data-sd="'+dsi+'"><span class="ic">'+ic+'</span><span class="dd">'+mk(dsi).getDate()+'</span></div>';
   }
   h+='</div>';
   var y=new Date();y.setDate(y.getDate()-1);var yds=fm(y);
