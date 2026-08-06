@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// Kairos — Firestore security rules
+//
+// IMPORTANT: the Firebase apiKey in index.html is NOT a secret. It only
+// identifies the project; these rules are what actually protect your data.
+// Deploy this file (see DEPLOY.md) so the defaults below apply.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- A user can only touch their own document and sub-collections ----
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // showups/{date}, and any future per-user sub-collection
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ---- Duels: only participants can read; writes are constrained ----
+    match /duels/{code} {
+      allow read: if request.auth != null;
+
+      // The host creates the duel and must set themselves as host.
+      allow create: if request.auth != null
+                    && request.resource.data.hostUid == request.auth.uid
+                    && request.resource.data.guestUid == '';
+
+      // Updates are allowed for: the host, the current guest, or a new player
+      // joining an open duel (guest slot still empty).
+      allow update: if request.auth != null && (
+                       resource.data.hostUid == request.auth.uid
+                       || resource.data.guestUid == request.auth.uid
+                       || (resource.data.guestUid == ''
+                           && request.resource.data.guestUid == request.auth.uid)
+                    );
+
+      // Only the host can delete the duel.
+      allow delete: if request.auth != null
+                    && resource.data.hostUid == request.auth.uid;
+    }
+
+    // ---- Feedback: write-only, no reading back; basic anti-spam shape ----
+    match /feedback/{doc} {
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.msg is string
+                    && request.resource.data.msg.size() > 0
+                    && request.resource.data.msg.size() <= 2000;
+      allow read, update, delete: if false;
+    }
+
+    // Everything else is denied by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
