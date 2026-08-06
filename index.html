@@ -196,9 +196,11 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 /* Calendar */
 .cg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
 .cg .ch{font-size:10px;color:var(--text3);text-align:center;padding:4px;font-weight:600}
-.cy{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:var(--card2);color:var(--text4);transition:all .15s}
+.cy{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:var(--card2);color:var(--text4);transition:all .15s;position:relative}
 .cy:hover{background:var(--border)}
-.cy.pf{background:var(--accent);color:#fff}
+.cy.pf{background:var(--warm-bg);color:var(--text3);border:1.5px solid var(--warm2)}
+.cy.pf .cy-mask{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1}
+.cy.pf .cy-d{position:absolute;top:2px;right:4px;font-size:8px;font-weight:800;color:var(--text3)}
 .cy.pt{background:var(--accent-bg);color:var(--accent-dark)}
 .cy.now{outline:2px solid var(--warm);outline-offset:-1px}
 .mn{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -932,7 +934,7 @@ function rCal(el){
   el.innerHTML=h;
   document.getElementById("cmp").onclick=function(){CM.setMonth(CM.getMonth()-1);rCal(el);};
   document.getElementById("cmn").onclick=function(){CM.setMonth(CM.getMonth()+1);rCal(el);};
-  for(var d=1;d<=dim;d++)(function(d){var ds=y+"-"+pad(m+1)+"-"+pad(d),dt=new Date(y,m,d);if(dt>now)return;ld(ds,function(o){var ce=document.getElementById("cd"+d);if(!ce)return;if(ds===td())ce.classList.add("now");var c=cntDone(o,ds);if(c.done>0&&c.done===c.total)ce.classList.add("pf");else if(c.done>0)ce.classList.add("pt");});})(d);
+  for(var d=1;d<=dim;d++)(function(d){var ds=y+"-"+pad(m+1)+"-"+pad(d),dt=new Date(y,m,d);if(dt>now)return;ld(ds,function(o){var ce=document.getElementById("cd"+d);if(!ce)return;if(ds===td())ce.classList.add("now");var c=cntDone(o,ds);if(c.done>0&&c.done===c.total){ce.classList.add("pf");ce.innerHTML='<span class="cy-mask">&#128376;&#65039;</span><span class="cy-d">'+d+'</span>';}else if(c.done>0)ce.classList.add("pt");});})(d);
   el.querySelectorAll("[data-cd]").forEach(function(c){c.onclick=function(){var ds=this.dataset.cd;CD=mk(ds);LD="";currentPage="today";renderPage();};});
   lRep(y,m);document.getElementById("rdl").onclick=function(){dlX(y,m);};
 }
@@ -1152,9 +1154,6 @@ function rShowUp(el){
   var y=new Date();y.setDate(y.getDate()-1);var yds=fm(y);
   if(!isHit(yds)&&SUD.total>0){h+='<div style="margin-top:18px;padding:10px 12px;background:var(--warm-bg);border:1px solid var(--warm2);border-radius:10px;font-size:12px;color:var(--text2)">&#10052;&#65039; You missed '+mk(yds).toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"})+'. Repair it for <span class="coin">&#129689; 10</span> to save your chain.<button class="btn btn-warm btn-sm btn-full" id="suRepair" style="margin-top:8px">Repair Day (10 coins)</button></div>';}
   h+='<div style="font-size:11px;color:var(--text3);margin-top:12px;text-align:center">&#128293; = showed up &nbsp; &#10052;&#65039; = repaired &nbsp; +5 coins each show-up</div></div>';
-  h+='<div class="card"><div class="card-t">Show-Up Milestones</div>';
-  for(var i=0;i<MILES.length;i++){var m=MILES[i],e=(SUD.best||0)>=m.d;h+='<div class="ms"><div style="font-size:24px;width:36px;text-align:center">'+m.i+'</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.n+'</div><div style="font-size:11px;color:var(--text3)">'+m.d+'-day chain</div></div><div style="font-size:11px;font-weight:700;color:'+(e?"var(--accent)":"var(--text4)")+'">'+(e?"&#10003; Unlocked":m.d+" days")+'</div></div>';}
-  h+='</div>';
   h+='<div class="card"><div class="card-t">Challenge Your Bestie &#9876;&#65039;</div><div id="duelZone"><div class="empty">Loading duel...</div></div></div>';
   el.innerHTML=h;
   var mb=document.getElementById("suMain");if(mb)mb.onclick=suCheckIn;
@@ -1313,26 +1312,39 @@ function openGoalDetail(preset){
   h+='<div class="rule-opt" data-r="self"><div class="ro-dot"></div><div><div class="ro-t">I\'ll mark it myself</div><div class="ro-d">Sub-goals are for tracking; you decide when the day counts.</div></div></div>';
   h+='<div class="card-t" style="margin-top:16px">Timeline</div>';
   h+='<label style="margin-top:0">Start date</label><input id="gdStart" type="date" value="'+startDs+'">';
-  h+='<label>Target date</label><input id="gdTarget" type="date" value="'+addDaysStr(startDs,days)+'">';
-  h+='<button class="btn btn-primary btn-full" id="gdStartBtn" style="margin-top:18px;font-size:15px">&#128293; Start '+es(custom?"Goal":preset.name)+'</button>';
+  if(!custom){
+    h+='<label>Length — extend in full rounds, you can\'t shorten it</label>';
+    h+='<div style="display:flex;align-items:center;gap:12px;margin-top:4px">';
+    h+='<button type="button" class="btn btn-ghost btn-sm" id="rMinus" style="min-width:40px;font-size:18px">&#8722;</button>';
+    h+='<div style="text-align:center;min-width:64px"><div id="rDisp" style="font-family:var(--display);font-size:22px;color:var(--accent);line-height:1">&#215;1</div><div id="rDays" style="font-size:11px;color:var(--text3);font-weight:700">'+days+' days</div></div>';
+    h+='<button type="button" class="btn btn-primary btn-sm" id="rPlus" style="min-width:40px;font-size:18px">+</button>';
+    h+='<div style="font-size:11px;color:var(--text3);flex:1">1 round = '+days+' days</div></div>';
+  }
+  h+='<div style="font-size:12px;color:var(--text2);margin-top:14px;padding:11px 13px;background:var(--card2);border:1px solid var(--border);border-radius:10px">&#127937; Ends on <b id="gdEnd">'+addDaysStr(startDs,days)+'</b> &middot; <span id="gdTot">'+days+'</span> days total</div>';
+  h+='<button class="btn btn-primary btn-full" id="gdStartBtn" style="margin-top:16px;font-size:15px">&#128293; Start '+es(custom?"Goal":preset.name)+'</button>';
   h+='</div>';
   md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
   function close(){if(ov.parentNode)document.body.removeChild(ov);}
   document.getElementById("gdX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
   md.querySelectorAll(".rule-opt").forEach(function(o){o.onclick=function(){rule=this.dataset.r;md.querySelectorAll(".rule-opt").forEach(function(x){x.classList.remove("on");});this.classList.add("on");};});
-  // sync target when start/days change
-  var startI=document.getElementById("gdStart"),targetI=document.getElementById("gdTarget");
+  var startI=document.getElementById("gdStart"),rounds=1;
+  function totalDays(){return custom?(parseInt((document.getElementById("cDays")||{}).value)||30):days*rounds;}
+  function refreshEnd(){var t=totalDays(),end=document.getElementById("gdEnd"),tot=document.getElementById("gdTot");if(end)end.textContent=addDaysStr(startI.value||td(),t);if(tot)tot.textContent=t;}
+  startI.onchange=refreshEnd;
   if(custom){
-    var cDays=document.getElementById("cDays");
-    function syncT(){targetI.value=addDaysStr(startI.value||td(),parseInt(cDays.value)||30);}
-    cDays.oninput=syncT;startI.onchange=syncT;
+    var cDays=document.getElementById("cDays");cDays.oninput=refreshEnd;
     document.getElementById("cSubAdd").onclick=function(){var nm=(document.getElementById("cSubName").value||"").trim();if(!nm)return;customSubs.push({icon:"&#9989;",name:nm,desc:""});document.getElementById("cSubName").value="";var list=document.getElementById("cSubList");list.innerHTML=customSubs.map(function(s){return '<div class="sub-item"><div class="si-ic">'+s.icon+'</div><div><div class="si-n">'+es(s.name)+'</div></div></div>';}).join("");};
-  }else{startI.onchange=function(){targetI.value=addDaysStr(startI.value||td(),days);};}
+  }else{
+    function refreshRounds(){document.getElementById("rDisp").innerHTML="&#215;"+rounds;document.getElementById("rDays").textContent=(days*rounds)+" days";refreshEnd();}
+    document.getElementById("rPlus").onclick=function(){rounds++;refreshRounds();};
+    document.getElementById("rMinus").onclick=function(){if(rounds>1){rounds--;refreshRounds();}else ts(preset.name+" can\'t be shorter than "+days+" days");};
+  }
   document.getElementById("gdStartBtn").onclick=function(){
-    var name=preset.name,desc=preset.desc,dur=preset.dur,dcount=preset.days,subs=preset.subs;
-    if(custom){name=(document.getElementById("cName").value||"").trim();if(!name){ts("Enter a goal name");return;}desc=(document.getElementById("cDesc").value||"").trim();dcount=parseInt(document.getElementById("cDays").value)||30;dur=dcount+" days";subs=customSubs.slice();}
-    var st=startI.value||td(),tg=targetI.value||addDaysStr(st,dcount);
-    var goal={id:"g_"+Date.now(),presetId:custom?"":preset.id,icon:preset.icon,name:name,desc:desc,dur:dur,days:dcount,subs:subs,rule:rule,start:st,target:tg,log:[],createdAt:Date.now()};
+    var name=preset.name,desc=preset.desc,subs=preset.subs,base=days,dcount;
+    if(custom){name=(document.getElementById("cName").value||"").trim();if(!name){ts("Enter a goal name");return;}desc=(document.getElementById("cDesc").value||"").trim();dcount=parseInt(document.getElementById("cDays").value)||30;if(dcount<1){ts("Duration must be at least 1 day");return;}base=dcount;subs=customSubs.slice();}
+    else{dcount=days*rounds;}
+    var st=startI.value||td(),tg=addDaysStr(st,dcount);
+    var goal={id:"g_"+Date.now(),presetId:custom?"":preset.id,icon:preset.icon,name:name,desc:desc,dur:dcount+" days",days:dcount,baseDays:base,rounds:custom?1:rounds,subs:subs,rule:rule,start:st,target:tg,log:[],createdAt:Date.now()};
     UD.goals=UD.goals||[];UD.goals.push(goal);
     saveGoals(function(){ts("&#127919; "+name+" started!");close();currentPage="goals";renderPage();});
   };
