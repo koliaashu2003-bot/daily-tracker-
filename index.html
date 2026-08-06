@@ -1149,26 +1149,50 @@ function updateDuelScore(){
   var f=UD.duelRole==="host"?{hostScore:SUSTREAK}:{guestScore:SUSTREAK};
   db.collection("duels").doc(UD.activeDuel).update(f).catch(function(){});
 }
-// Shared-task duel: consecutive days a partner ticked ALL shared tasks
+// A shared task is "active" on a date if within its optional start/end window
+function taskActive(t,ds){return (!t.start||ds>=t.start)&&(!t.end||ds<=t.end);}
+// Shared-task duel: consecutive days a partner ticked ALL tasks that were active that day
 function duelStreak(x,role){
-  var ids=(x.tasks||[]).map(function(t){return t.id;});
-  if(!ids.length)return 0;
+  var tasks=x.tasks||[];if(!tasks.length)return 0;
   var done=(x.done&&x.done[role])||{};
-  function allDone(ds){var arr=done[ds]||[];for(var i=0;i<ids.length;i++)if(arr.indexOf(ids[i])===-1)return false;return true;}
+  function dayOk(ds){var act=tasks.filter(function(t){return taskActive(t,ds);});if(!act.length)return false;var arr=done[ds]||[];for(var i=0;i<act.length;i++)if(arr.indexOf(act[i].id)===-1)return false;return true;}
   var s=0,d=new Date();
-  if(!allDone(td()))d.setDate(d.getDate()-1);
-  for(var i=0;i<400;i++){var ds=fm(d);if(allDone(ds)){s++;d.setDate(d.getDate()-1);}else break;}
+  if(!dayOk(td()))d.setDate(d.getDate()-1);
+  for(var i=0;i<400;i++){var ds=fm(d);if(dayOk(ds)){s++;d.setDate(d.getDate()-1);}else break;}
   return s;
 }
-function duelAddTask(name){
+function duelAddTask(name,end){
   name=(name||"").trim();if(!name){ts("Enter a task");return;}if(!UD.activeDuel)return;
-  var task={id:"dt_"+Date.now(),name:name.slice(0,60),by:UD.duelRole};
+  var task={id:"dt_"+Date.now(),name:name.slice(0,60),by:UD.duelRole,start:td()};
+  if(end)task.end=end;
   db.collection("duels").doc(UD.activeDuel).update({tasks:firebase.firestore.FieldValue.arrayUnion(task)}).then(function(){ts("Shared task added");}).catch(function(){ts("Couldn't add — database access needed");});
 }
 function duelToggleTask(tid,checked){
   if(!UD.activeDuel)return;
   var u={};u["done."+UD.duelRole+"."+td()]=checked?firebase.firestore.FieldValue.arrayUnion(tid):firebase.firestore.FieldValue.arrayRemove(tid);
   db.collection("duels").doc(UD.activeDuel).update(u).catch(function(){ts("Couldn't update");});
+}
+function duelEditTask(tid,name,end){
+  name=(name||"").trim();if(!name){ts("Enter a task name");return;}if(!UD.activeDuel)return;
+  var ref=db.collection("duels").doc(UD.activeDuel);
+  ref.get().then(function(d){if(!d.exists)return;var tasks=d.data().tasks||[];for(var i=0;i<tasks.length;i++){if(tasks[i].id===tid){tasks[i].name=name.slice(0,60);if(end)tasks[i].end=end;else delete tasks[i].end;}}ref.update({tasks:tasks}).then(function(){ts("Task updated");});}).catch(function(){ts("Couldn't update");});
+}
+function duelDeleteTask(tid){
+  if(!UD.activeDuel)return;var ref=db.collection("duels").doc(UD.activeDuel);
+  ref.get().then(function(d){if(!d.exists)return;var tasks=(d.data().tasks||[]).filter(function(t){return t.id!==tid;});ref.update({tasks:tasks}).then(function(){ts("Task removed");});}).catch(function(){ts("Couldn't remove");});
+}
+function openDuelTaskEdit(task){
+  var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
+  var h='<div class="detail-3d"><div class="modal-title"><span>Edit Shared Task</span><button class="modal-close" id="dteX">&#10005;</button></div>';
+  h+='<label style="margin-top:0">Task name</label><input id="dteName" value="'+es(task.name)+'" maxlength="60">';
+  h+='<label>End date (optional)</label><input id="dteEnd" type="date" value="'+es(task.end||"")+'"><div style="font-size:11px;color:var(--text3);margin-top:4px">Leave empty for no end date.</div>';
+  h+='<button class="btn btn-primary btn-full" id="dteSave" style="margin-top:16px">Save</button>';
+  h+='<button class="btn btn-ghost btn-full" id="dteDel" style="margin-top:8px;color:var(--danger)">Delete task</button></div>';
+  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  function close(){if(ov.parentNode)ov.remove();}
+  document.getElementById("dteX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+  document.getElementById("dteSave").onclick=function(){duelEditTask(task.id,document.getElementById("dteName").value,document.getElementById("dteEnd").value);close();};
+  document.getElementById("dteDel").onclick=function(){close();confirmDlg({title:"Delete shared task?",msg:"“"+task.name+"” will be removed for both of you.",yes:"Delete",danger:true},function(){duelDeleteTask(task.id);});};
 }
 function rShowUp(el){
   var ds=td(),shown=!!(SUMAP[ds]&&SUMAP[ds].done),now=new Date();
@@ -1242,18 +1266,32 @@ function renderDuel(){
     h+='<div style="text-align:center;font-size:10px;color:var(--text3);margin:-2px 0 8px;letter-spacing:.5px;text-transform:uppercase;font-weight:700">Shared-task day streak</div>';
     if(!x.guestUid){h+='<div style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:8px">Share this code with your bestie:</div><div class="rew-code" id="duelShareCode" style="cursor:pointer">'+x.code+'</div>';}
     else if(x.tasks&&x.tasks.length){var lead=hStreak===gStreak?"It\'s a tie!":((hStreak>gStreak?x.hostName:x.guestName)+" leads!");h+='<div style="text-align:center;font-family:var(--display);font-size:16px;color:var(--accent);margin:4px 0 8px;letter-spacing:.5px">'+es(lead)+'</div>';}
-    // Shared daily tasks — added by either player, done by both
+    // Shared daily tasks — added/edited by either player, done by both, partner status shown live
     h+='<div class="card-t" style="margin-top:14px">Shared Daily Tasks</div>';
-    var tasks=x.tasks||[],myDone=(x.done&&x.done[me]&&x.done[me][td()])||[];
+    var tasks=x.tasks||[],pRole=(me==="host"?"guest":"host");
+    var myDone=(x.done&&x.done[me]&&x.done[me][td()])||[];
+    var pDone=(x.done&&x.done[pRole]&&x.done[pRole][td()])||[];
+    var pName=(pRole==="host"?x.hostName:x.guestName)||"Partner";
     if(!tasks.length)h+='<div class="empty" style="padding:8px">No shared tasks yet. Add one you both do every day &#8595;</div>';
-    else for(var i=0;i<tasks.length;i++){var tk=tasks[i],ckd=myDone.indexOf(tk.id)!==-1;h+='<div class="rw" data-dt="'+tk.id+'" style="padding:10px 0"><div class="ck'+(ckd?" on":"")+'">'+(ckd?"&#10003;":"")+'</div><div style="flex:1"><div class="tn" style="font-size:13px">'+es(tk.name)+'</div>'+(tk.by?'<div class="td2">added by '+(tk.by===me?"you":"partner")+'</div>':'')+'</div></div>';}
-    h+='<div style="display:flex;gap:8px;margin-top:10px"><input id="duelTaskName" placeholder="Add a shared daily task" maxlength="60"><button class="btn btn-primary btn-sm" id="duelTaskAdd" style="flex-shrink:0">Add</button></div>';
-    h+='<div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center">Tick every shared task each day to grow your streak. Tasks you add appear for your partner too.</div>';
+    else for(var i=0;i<tasks.length;i++){var tk=tasks[i],act=taskActive(tk,td()),ckd=myDone.indexOf(tk.id)!==-1,pkd=pDone.indexOf(tk.id)!==-1;
+      h+='<div class="rw" style="padding:10px 0;align-items:center">';
+      h+=act?'<div class="ck'+(ckd?" on":"")+'" data-toggle="'+tk.id+'">'+(ckd?"&#10003;":"")+'</div>':'<div style="width:22px;flex-shrink:0"></div>';
+      h+='<div style="flex:1;min-width:0"><div class="tn" style="font-size:13px">'+es(tk.name)+(tk.end?' <span class="freq-tag">ends '+es(tk.end)+'</span>':'')+(!act?' <span class="freq-tag" style="background:var(--border);color:var(--text3)">Ended</span>':'')+'</div>';
+      h+='<div class="td2">by '+(tk.by===me?"you":"partner")+' &middot; '+es(pName.split(" ")[0])+' today: '+(pkd?'<span style="color:var(--accent);font-weight:700">&#10003; done</span>':'<span style="color:var(--text4)">not yet</span>')+'</div></div>';
+      h+='<button data-edit="'+tk.id+'" title="Edit" style="background:none;border:none;font-size:14px;cursor:pointer;padding:6px;color:var(--text3)">&#9998;</button>';
+      h+='<button data-del="'+tk.id+'" title="Delete" style="background:none;border:none;font-size:14px;cursor:pointer;padding:6px;color:var(--text3)">&#128465;</button>';
+      h+='</div>';
+    }
+    h+='<label style="margin-top:8px">Add a shared daily task</label><input id="duelTaskName" placeholder="e.g. No sugar" maxlength="60">';
+    h+='<div style="display:flex;gap:8px;margin-top:8px;align-items:center"><input id="duelTaskEnd" type="date" style="flex:1" title="End date (optional)"><button class="btn btn-primary btn-sm" id="duelTaskAdd" style="flex-shrink:0">Add</button></div>';
+    h+='<div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center">Set an end date or leave empty for no end date. Tick every active task daily to grow your streak — your partner sees it live.</div>';
     h+='<button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:12px">Leave duel</button>';
     z.innerHTML=h;
     var sc=document.getElementById("duelShareCode");if(sc)sc.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(x.code);ts("Code copied: "+x.code);};
-    var ta=document.getElementById("duelTaskAdd");if(ta)ta.onclick=function(){duelAddTask(document.getElementById("duelTaskName").value);};
-    z.querySelectorAll("[data-dt]").forEach(function(r){r.onclick=function(){var tid=this.dataset.dt;duelToggleTask(tid,myDone.indexOf(tid)===-1);};});
+    var ta=document.getElementById("duelTaskAdd");if(ta)ta.onclick=function(){duelAddTask(document.getElementById("duelTaskName").value,document.getElementById("duelTaskEnd").value);};
+    z.querySelectorAll("[data-toggle]").forEach(function(el){el.onclick=function(){var tid=this.dataset.toggle;duelToggleTask(tid,myDone.indexOf(tid)===-1);};});
+    z.querySelectorAll("[data-edit]").forEach(function(el){el.onclick=function(e){e.stopPropagation();var tid=this.dataset.edit,t=(x.tasks||[]).filter(function(k){return k.id===tid;})[0];if(t)openDuelTaskEdit(t);};});
+    z.querySelectorAll("[data-del]").forEach(function(el){el.onclick=function(e){e.stopPropagation();var tid=this.dataset.del,t=(x.tasks||[]).filter(function(k){return k.id===tid;})[0];confirmDlg({title:"Delete shared task?",msg:(t?"“"+t.name+"”":"This task")+" will be removed for both of you.",yes:"Delete",danger:true},function(){duelDeleteTask(tid);});};});
     document.getElementById("duelLeave").onclick=function(){confirmDlg({title:"Leave duel?",msg:"You can rejoin later with the same code.",yes:"Leave",icon:"&#9876;&#65039;"},function(){leaveDuel();});};
   },function(){if(_duelUnsub){_duelUnsub();_duelUnsub=null;}z.innerHTML='<div style="font-size:12px;color:var(--text3)">Duels need Firestore access for the <code>duels</code> collection. Your solo streak still works perfectly.</div><button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:8px">Clear</button>';var dl=document.getElementById("duelLeave");if(dl)dl.onclick=leaveDuel;});
 }
