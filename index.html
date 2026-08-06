@@ -425,6 +425,8 @@ var U=null,UD=null,CD=new Date(),CM=new Date(),PD={},LD="",SK=0,currentPage="das
 var SUD={coins:0,best:0,total:0,freezes:[]},SUMAP={},SUSTREAK=0,_camStream=null;
 var COFFEE_QR="coffee-qr.jpg";// path to the Buy Me a Coffee QR image (falls back to a placeholder if missing)
 var _duelUnsub=null;// live listener for the active duel
+// Optional: paste your Formspree endpoint (https://formspree.io/f/xxxx) to also email feedback to yourself.
+var FEEDBACK_ENDPOINT="";
 
 function pad(n){return n<10?"0"+n:""+n;}
 function fm(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -749,6 +751,8 @@ function openProfile(){
   for(var i=0;i<stats.length;i++)h+='<div class="su-stat"><div class="n" style="font-size:20px">'+stats[i][1]+'</div><div class="l">'+stats[i][2]+'</div></div>';
   h+='</div>';
   h+='<label style="margin-top:16px">Display name</label><div style="display:flex;gap:8px"><input id="pfName" value="'+es(UD.name||"")+'"><button class="btn btn-primary btn-sm" id="pfSave" style="flex-shrink:0">Save</button></div>';
+  var isAdmin=(UD.email===ADMIN_EMAIL);
+  h+='<div class="card-t" style="margin-top:18px">'+(isAdmin?"&#128235; Feedback inbox":"Your feedback")+'</div><div id="pfFb" style="max-height:220px;overflow-y:auto"><div class="empty" style="padding:10px">Loading&#8230;</div></div>';
   h+='<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-ghost btn-sm" id="pfExport" style="flex:1">&#128229; Export my data</button><button class="btn btn-ghost btn-sm" id="pfOut" style="flex:1;color:var(--danger)">Sign Out</button></div>';
   h+='<button class="btn btn-ghost btn-full" id="pfDel" style="margin-top:8px;color:var(--danger);font-size:11px">Delete my account &amp; data</button></div>';
   md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
@@ -758,6 +762,18 @@ function openProfile(){
     var data={exportedAt:new Date().toISOString(),profile:{name:UD.name,email:UD.email},stats:{showUpStreak:SUSTREAK,best:SUD.best,total:SUD.total,coins:SUD.coins},tasks:UD.tasks||[],archivedTasks:UD.archivedTasks||[],goals:UD.goals||[],showUps:SUMAP,freezes:SUD.freezes||[]};
     var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kairos-data-"+td()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);ts("Your data was downloaded");
   };
+  (function(){
+    var fbEl=document.getElementById("pfFb");if(!fbEl)return;
+    var q=isAdmin?db.collection("feedback").orderBy("ts","desc").limit(50):db.collection("feedback").where("uid","==",U.uid);
+    q.get().then(function(qs){
+      var rows=[];qs.forEach(function(d){rows.push(d.data());});
+      if(!isAdmin)rows.sort(function(a,b){return ((b.ts&&b.ts.seconds)||0)-((a.ts&&a.ts.seconds)||0);});
+      if(!rows.length){fbEl.innerHTML='<div class="empty" style="padding:10px">'+(isAdmin?"No feedback yet":"You haven\'t sent feedback yet")+'</div>';return;}
+      var html="";for(var i=0;i<rows.length;i++){var r=rows[i],when=(r.ts&&r.ts.toDate)?r.ts.toDate().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"";
+        html+='<div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">'+(isAdmin?'<div style="font-size:11px;font-weight:700;color:var(--accent)">'+es(r.name||"User")+' <span style="color:var(--text3);font-weight:600">&middot; '+es(r.email||"")+'</span></div>':'')+'<div style="font-size:13px;color:var(--text);margin-top:2px;white-space:pre-wrap;word-break:break-word">'+es(r.msg||"")+'</div><div style="font-size:10px;color:var(--text4);margin-top:4px">'+when+'</div></div>';}
+      fbEl.innerHTML=html;
+    }).catch(function(){fbEl.innerHTML='<div class="empty" style="padding:10px;font-size:11px">Couldn\'t load — publish the updated Firestore rules to enable this.</div>';});
+  })();
   document.getElementById("pfDel").onclick=function(){var btn=this;
    confirmDlg({title:"Delete account?",msg:"This permanently erases your account and ALL your data. This cannot be undone.",yes:"Delete",danger:true},function(){
    confirmDlg({title:"Are you sure?",msg:"Everything will be permanently erased.",yes:"Delete forever",danger:true},function(){
@@ -1129,6 +1145,27 @@ function updateDuelScore(){
   var f=UD.duelRole==="host"?{hostScore:SUSTREAK}:{guestScore:SUSTREAK};
   db.collection("duels").doc(UD.activeDuel).update(f).catch(function(){});
 }
+// Shared-task duel: consecutive days a partner ticked ALL shared tasks
+function duelStreak(x,role){
+  var ids=(x.tasks||[]).map(function(t){return t.id;});
+  if(!ids.length)return 0;
+  var done=(x.done&&x.done[role])||{};
+  function allDone(ds){var arr=done[ds]||[];for(var i=0;i<ids.length;i++)if(arr.indexOf(ids[i])===-1)return false;return true;}
+  var s=0,d=new Date();
+  if(!allDone(td()))d.setDate(d.getDate()-1);
+  for(var i=0;i<400;i++){var ds=fm(d);if(allDone(ds)){s++;d.setDate(d.getDate()-1);}else break;}
+  return s;
+}
+function duelAddTask(name){
+  name=(name||"").trim();if(!name){ts("Enter a task");return;}if(!UD.activeDuel)return;
+  var task={id:"dt_"+Date.now(),name:name.slice(0,60),by:UD.duelRole};
+  db.collection("duels").doc(UD.activeDuel).update({tasks:firebase.firestore.FieldValue.arrayUnion(task)}).then(function(){ts("Shared task added");}).catch(function(){ts("Couldn't add — database access needed");});
+}
+function duelToggleTask(tid,checked){
+  if(!UD.activeDuel)return;
+  var u={};u["done."+UD.duelRole+"."+td()]=checked?firebase.firestore.FieldValue.arrayUnion(tid):firebase.firestore.FieldValue.arrayRemove(tid);
+  db.collection("duels").doc(UD.activeDuel).update(u).catch(function(){ts("Couldn't update");});
+}
 function rShowUp(el){
   var ds=td(),shown=!!(SUMAP[ds]&&SUMAP[ds].done),now=new Date();
   var dlong=now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
@@ -1176,7 +1213,7 @@ function rShowUp(el){
 function renderDuel(){
   var z=document.getElementById("duelZone");if(!z)return;
   if(!UD.activeDuel){
-    z.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:10px">Go head-to-head. Whoever keeps the longest show-up streak wins.</div>'+
+    z.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:10px">Go head-to-head. Add shared daily tasks and whoever keeps the longest all-done streak wins.</div>'+
       '<button class="btn btn-primary btn-sm btn-full" id="duelCreate">Start a Duel</button>'+
       '<div style="text-align:center;font-size:11px;color:var(--text4);margin:10px 0 8px">— or join with a code —</div>'+
       '<div style="display:flex;gap:8px"><input id="duelCode" placeholder="ABCDE" style="text-transform:uppercase"><button class="btn btn-ghost btn-sm" id="duelJoin">Join</button></div>';
@@ -1189,20 +1226,30 @@ function renderDuel(){
   // Live listener: both players' scores update in real time without a manual refresh.
   _duelUnsub=db.collection("duels").doc(UD.activeDuel).onSnapshot(function(d){
     if(!d.exists){z.innerHTML='<div class="empty">Duel ended</div><button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:8px">Clear</button>';document.getElementById("duelLeave").onclick=leaveDuel;return;}
-    var x=d.data(),me=UD.duelRole,hLead=x.hostScore>=x.guestScore;
+    var x=d.data(),me=UD.duelRole;
+    var hStreak=duelStreak(x,"host"),gStreak=duelStreak(x,"guest"),hLead=hStreak>=gStreak;
     var hAv=su(x.hostPhoto)?'<img src="'+su(x.hostPhoto)+'">':'<div class="dt-av">&#128100;</div>';
     var gAv=x.guestUid?(su(x.guestPhoto)?'<img src="'+su(x.guestPhoto)+'">':'<div class="dt-av">&#128100;</div>'):'<div class="dt-av">&#8987;</div>';
     var h='<div class="duel-arena">';
-    h+='<div class="duel-team'+(hLead&&x.guestUid?' lead':'')+'">'+hAv+'<div class="dt-name">'+es(x.hostName||"Host")+(me==="host"?" (You)":"")+'</div><div class="dt-score">'+x.hostScore+'</div></div>';
+    h+='<div class="duel-team'+(hLead&&x.guestUid?' lead':'')+'">'+hAv+'<div class="dt-name">'+es(x.hostName||"Host")+(me==="host"?" (You)":"")+'</div><div class="dt-score">&#128293;'+hStreak+'</div></div>';
     h+='<div class="duel-vs">VS</div>';
-    h+='<div class="duel-team'+(!hLead&&x.guestUid?' lead':'')+'">'+gAv+'<div class="dt-name">'+(x.guestUid?es(x.guestName||"Guest")+(me==="guest"?" (You)":""):"Waiting...")+'</div><div class="dt-score">'+(x.guestUid?x.guestScore:"–")+'</div></div>';
+    h+='<div class="duel-team'+(!hLead&&x.guestUid?' lead':'')+'">'+gAv+'<div class="dt-name">'+(x.guestUid?es(x.guestName||"Guest")+(me==="guest"?" (You)":""):"Waiting...")+'</div><div class="dt-score">'+(x.guestUid?"&#128293;"+gStreak:"–")+'</div></div>';
     h+='</div>';
+    h+='<div style="text-align:center;font-size:10px;color:var(--text3);margin:-2px 0 8px;letter-spacing:.5px;text-transform:uppercase;font-weight:700">Shared-task day streak</div>';
     if(!x.guestUid){h+='<div style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:8px">Share this code with your bestie:</div><div class="rew-code" id="duelShareCode" style="cursor:pointer">'+x.code+'</div>';}
-    else{var lead=x.hostScore===x.guestScore?"It\'s a tie!":((x.hostScore>x.guestScore?x.hostName:x.guestName)+" leads!");h+='<div style="text-align:center;font-family:var(--display);font-size:16px;color:var(--accent);margin:4px 0 8px;letter-spacing:.5px">'+es(lead)+'</div>';}
-    h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" id="duelRefresh" style="flex:1">&#8635; Refresh</button><button class="btn btn-ghost btn-sm" id="duelLeave" style="flex:1">Leave</button></div>';
+    else if(x.tasks&&x.tasks.length){var lead=hStreak===gStreak?"It\'s a tie!":((hStreak>gStreak?x.hostName:x.guestName)+" leads!");h+='<div style="text-align:center;font-family:var(--display);font-size:16px;color:var(--accent);margin:4px 0 8px;letter-spacing:.5px">'+es(lead)+'</div>';}
+    // Shared daily tasks — added by either player, done by both
+    h+='<div class="card-t" style="margin-top:14px">Shared Daily Tasks</div>';
+    var tasks=x.tasks||[],myDone=(x.done&&x.done[me]&&x.done[me][td()])||[];
+    if(!tasks.length)h+='<div class="empty" style="padding:8px">No shared tasks yet. Add one you both do every day &#8595;</div>';
+    else for(var i=0;i<tasks.length;i++){var tk=tasks[i],ckd=myDone.indexOf(tk.id)!==-1;h+='<div class="rw" data-dt="'+tk.id+'" style="padding:10px 0"><div class="ck'+(ckd?" on":"")+'">'+(ckd?"&#10003;":"")+'</div><div style="flex:1"><div class="tn" style="font-size:13px">'+es(tk.name)+'</div>'+(tk.by?'<div class="td2">added by '+(tk.by===me?"you":"partner")+'</div>':'')+'</div></div>';}
+    h+='<div style="display:flex;gap:8px;margin-top:10px"><input id="duelTaskName" placeholder="Add a shared daily task" maxlength="60"><button class="btn btn-primary btn-sm" id="duelTaskAdd" style="flex-shrink:0">Add</button></div>';
+    h+='<div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center">Tick every shared task each day to grow your streak. Tasks you add appear for your partner too.</div>';
+    h+='<button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:12px">Leave duel</button>';
     z.innerHTML=h;
     var sc=document.getElementById("duelShareCode");if(sc)sc.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(x.code);ts("Code copied: "+x.code);};
-    document.getElementById("duelRefresh").onclick=function(){updateDuelScore();};
+    var ta=document.getElementById("duelTaskAdd");if(ta)ta.onclick=function(){duelAddTask(document.getElementById("duelTaskName").value);};
+    z.querySelectorAll("[data-dt]").forEach(function(r){r.onclick=function(){var tid=this.dataset.dt;duelToggleTask(tid,myDone.indexOf(tid)===-1);};});
     document.getElementById("duelLeave").onclick=function(){confirmDlg({title:"Leave duel?",msg:"You can rejoin later with the same code.",yes:"Leave",icon:"&#9876;&#65039;"},function(){leaveDuel();});};
   },function(){if(_duelUnsub){_duelUnsub();_duelUnsub=null;}z.innerHTML='<div style="font-size:12px;color:var(--text3)">Duels need Firestore access for the <code>duels</code> collection. Your solo streak still works perfectly.</div><button class="btn btn-ghost btn-sm btn-full" id="duelLeave" style="margin-top:8px">Clear</button>';var dl=document.getElementById("duelLeave");if(dl)dl.onclick=leaveDuel;});
 }
@@ -1391,7 +1438,12 @@ function rRew(el){
   h+='<div class="card"><div class="card-t">Feedback</div><textarea id="ft" placeholder="Share feedback or ideas..." rows="2"></textarea><button class="btn btn-primary btn-sm btn-full" id="fb" style="margin-top:8px">Send Feedback</button></div>';
   el.innerHTML=h;
   if(s>=21){document.getElementById("cpb").onclick=function(){var c=document.getElementById("cc").textContent;if(navigator.clipboard)navigator.clipboard.writeText(c);ts("Copied!");};}
-  var fb=document.getElementById("fb"),ft=document.getElementById("ft");if(fb)fb.onclick=function(){var m=ft.value.trim();if(!m){ts("Write something");return;}if(m.length>2000){ts("Please keep it under 2000 characters");return;}var last=0;try{last=parseInt(localStorage.getItem("kairos_fb")||"0");}catch(e){}if(Date.now()-last<60000){ts("Please wait a minute before sending again");return;}fb.disabled=true;fb.textContent="Sending...";db.collection("feedback").add({uid:U.uid,name:UD.name,email:UD.email,msg:m.slice(0,2000),ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){try{localStorage.setItem("kairos_fb",""+Date.now());}catch(e){}ft.value="";fb.disabled=false;fb.textContent="Send Feedback";ts("Thanks!");}).catch(function(){fb.disabled=false;fb.textContent="Send Feedback";});};
+  var fb=document.getElementById("fb"),ft=document.getElementById("ft");if(fb)fb.onclick=function(){var m=ft.value.trim();if(!m){ts("Write something");return;}if(m.length>2000){ts("Please keep it under 2000 characters");return;}var last=0;try{last=parseInt(localStorage.getItem("kairos_fb")||"0");}catch(e){}if(Date.now()-last<60000){ts("Please wait a minute before sending again");return;}fb.disabled=true;fb.textContent="Sending...";var msg=m.slice(0,2000);
+    db.collection("feedback").add({uid:U.uid,name:UD.name,email:UD.email,msg:msg,ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
+      try{localStorage.setItem("kairos_fb",""+Date.now());}catch(e){}
+      if(FEEDBACK_ENDPOINT){fetch(FEEDBACK_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({name:UD.name,email:UD.email,message:msg,_subject:"Kairos feedback from "+(UD.name||"a user")})}).catch(function(){});}
+      ft.value="";fb.disabled=false;fb.textContent="Send Feedback";ts("Thanks! Feedback sent &#10003;");
+    }).catch(function(){fb.disabled=false;fb.textContent="Send Feedback";ts("Couldn't send — try again");});};
 }
 function gC(uid){var ch="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",h=0;for(var i=0;i<uid.length;i++){h=((h<<5)-h)+uid.charCodeAt(i);h|=0;}h=Math.abs(h);var c="1PCT-";for(var i=0;i<6;i++){c+=ch[h%ch.length];h=Math.floor(h/ch.length)+i*7+13;}return c;}
 

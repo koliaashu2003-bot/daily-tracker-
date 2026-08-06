@@ -42,14 +42,18 @@ service cloud.firestore {
                     && resource.data.hostUid == request.auth.uid;
     }
 
-    // ---- Feedback: write-only, no reading back; basic anti-spam shape ----
+    // ---- Feedback: anyone signed in can submit; the admin reads all,
+    //      a user can read only their own. No edits or deletes. ----
     match /feedback/{doc} {
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid
                     && request.resource.data.msg is string
                     && request.resource.data.msg.size() > 0
                     && request.resource.data.msg.size() <= 2000;
-      allow read, update, delete: if false;
+      allow read: if request.auth != null
+                  && (resource.data.uid == request.auth.uid
+                      || request.auth.token.email == 'koliaashu2003@gmail.com');
+      allow update, delete: if false;
     }
 
     // Everything else is denied by default.
