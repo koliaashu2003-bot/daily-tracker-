@@ -431,6 +431,11 @@ var FEEDBACK_ENDPOINT="";
 // https://api.telegram.org/bot<TOKEN>/getUpdates (the "chat":{"id":...} value). Leave blank to disable.
 var TELEGRAM_TOKEN="7664367557:AAGnvL_i1DE0"+"K15xvYmcNxu98KRIcp-cBOw";// split to avoid secret-scanner false positives
 var TELEGRAM_CHAT_ID="1152679512";
+function sendTelegram(text,cb){
+  if(!(TELEGRAM_TOKEN&&TELEGRAM_CHAT_ID)){if(cb)cb({ok:false,description:"Telegram not configured"});return;}
+  fetch("https://api.telegram.org/bot"+TELEGRAM_TOKEN+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:TELEGRAM_CHAT_ID,text:text,disable_web_page_preview:true})})
+    .then(function(r){return r.json();}).then(function(j){if(cb)cb(j);}).catch(function(e){if(cb)cb({ok:false,description:"Network/CORS error: "+((e&&e.message)||e)});});
+}
 
 function pad(n){return n<10?"0"+n:""+n;}
 function fm(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -758,10 +763,12 @@ function openProfile(){
   var isAdmin=(UD.email===ADMIN_EMAIL);
   h+='<div class="card-t" style="margin-top:18px">'+(isAdmin?"&#128235; Feedback inbox":"Your feedback")+'</div><div id="pfFb" style="max-height:220px;overflow-y:auto"><div class="empty" style="padding:10px">Loading&#8230;</div></div>';
   h+='<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-ghost btn-sm" id="pfExport" style="flex:1">&#128229; Export my data</button><button class="btn btn-ghost btn-sm" id="pfOut" style="flex:1;color:var(--danger)">Sign Out</button></div>';
+  if(isAdmin&&TELEGRAM_TOKEN&&TELEGRAM_CHAT_ID)h+='<button class="btn btn-ghost btn-full" id="pfTg" style="margin-top:8px;font-size:11px">&#128228; Send test to Telegram</button>';
   h+='<button class="btn btn-ghost btn-full" id="pfDel" style="margin-top:8px;color:var(--danger);font-size:11px">Delete my account &amp; data</button></div>';
   md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
   function close(){if(ov.parentNode)ov.remove();}
   document.getElementById("pfX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
+  var pfTg=document.getElementById("pfTg");if(pfTg)pfTg.onclick=function(){var b=this;b.textContent="Sending...";b.disabled=true;sendTelegram("🔔 Kairos test — if you can read this, feedback delivery works!",function(j){b.disabled=false;b.innerHTML="&#128228; Send test to Telegram";if(j&&j.ok)ts("Sent &#10003; check your Telegram");else confirmDlg({title:"Telegram didn't deliver",msg:(j&&j.description)||"Unknown error",yes:"OK"});});};
   document.getElementById("pfExport").onclick=function(){
     var data={exportedAt:new Date().toISOString(),profile:{name:UD.name,email:UD.email},stats:{showUpStreak:SUSTREAK,best:SUD.best,total:SUD.total,coins:SUD.coins},tasks:UD.tasks||[],archivedTasks:UD.archivedTasks||[],goals:UD.goals||[],showUps:SUMAP,freezes:SUD.freezes||[]};
     var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kairos-data-"+td()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);ts("Your data was downloaded");
@@ -1481,10 +1488,11 @@ function rRew(el){
   el.innerHTML=h;
   if(s>=21){document.getElementById("cpb").onclick=function(){var c=document.getElementById("cc").textContent;if(navigator.clipboard)navigator.clipboard.writeText(c);ts("Copied!");};}
   var fb=document.getElementById("fb"),ft=document.getElementById("ft");if(fb)fb.onclick=function(){var m=ft.value.trim();if(!m){ts("Write something");return;}if(m.length>2000){ts("Please keep it under 2000 characters");return;}var last=0;try{last=parseInt(localStorage.getItem("kairos_fb")||"0");}catch(e){}if(Date.now()-last<60000){ts("Please wait a minute before sending again");return;}fb.disabled=true;fb.textContent="Sending...";var msg=m.slice(0,2000);
+    // Fire notifications immediately, independent of the database write
+    sendTelegram("💬 Kairos feedback\nFrom: "+(UD.name||"User")+" ("+(UD.email||"")+")\n\n"+msg);
+    if(FEEDBACK_ENDPOINT){fetch(FEEDBACK_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({name:UD.name,email:UD.email,message:msg,_subject:"Kairos feedback from "+(UD.name||"a user")})}).catch(function(){});}
     db.collection("feedback").add({uid:U.uid,name:UD.name,email:UD.email,msg:msg,ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
       try{localStorage.setItem("kairos_fb",""+Date.now());}catch(e){}
-      if(FEEDBACK_ENDPOINT){fetch(FEEDBACK_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({name:UD.name,email:UD.email,message:msg,_subject:"Kairos feedback from "+(UD.name||"a user")})}).catch(function(){});}
-      if(TELEGRAM_TOKEN&&TELEGRAM_CHAT_ID){var tgText="💬 Kairos feedback\nFrom: "+(UD.name||"User")+" ("+(UD.email||"")+")\n\n"+msg;fetch("https://api.telegram.org/bot"+TELEGRAM_TOKEN+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:TELEGRAM_CHAT_ID,text:tgText,disable_web_page_preview:true})}).catch(function(){});}
       ft.value="";fb.disabled=false;fb.textContent="Send Feedback";ts("Thanks! Feedback sent &#10003;");
     }).catch(function(){fb.disabled=false;fb.textContent="Send Feedback";ts("Couldn't send — try again");});};
 }
