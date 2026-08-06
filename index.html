@@ -427,6 +427,10 @@ var COFFEE_QR="coffee-qr.jpg";// path to the Buy Me a Coffee QR image (falls bac
 var _duelUnsub=null;// live listener for the active duel
 // Optional: paste your Formspree endpoint (https://formspree.io/f/xxxx) to also email feedback to yourself.
 var FEEDBACK_ENDPOINT="";
+// Optional: get instant feedback on Telegram. TELEGRAM_TOKEN from @BotFather, TELEGRAM_CHAT_ID from
+// https://api.telegram.org/bot<TOKEN>/getUpdates (the "chat":{"id":...} value). Leave blank to disable.
+var TELEGRAM_TOKEN="";
+var TELEGRAM_CHAT_ID="";
 
 function pad(n){return n<10?"0"+n:""+n;}
 function fm(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -1442,6 +1446,7 @@ function rRew(el){
     db.collection("feedback").add({uid:U.uid,name:UD.name,email:UD.email,msg:msg,ts:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
       try{localStorage.setItem("kairos_fb",""+Date.now());}catch(e){}
       if(FEEDBACK_ENDPOINT){fetch(FEEDBACK_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({name:UD.name,email:UD.email,message:msg,_subject:"Kairos feedback from "+(UD.name||"a user")})}).catch(function(){});}
+      if(TELEGRAM_TOKEN&&TELEGRAM_CHAT_ID){var tgText="💬 Kairos feedback\nFrom: "+(UD.name||"User")+" ("+(UD.email||"")+")\n\n"+msg;fetch("https://api.telegram.org/bot"+TELEGRAM_TOKEN+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:TELEGRAM_CHAT_ID,text:tgText,disable_web_page_preview:true})}).catch(function(){});}
       ft.value="";fb.disabled=false;fb.textContent="Send Feedback";ts("Thanks! Feedback sent &#10003;");
     }).catch(function(){fb.disabled=false;fb.textContent="Send Feedback";ts("Couldn't send — try again");});};
 }
