@@ -31,5 +31,5 @@ firebase deploy --only firestore:rules
 
 ## The site
 `index.html` is a single self-contained page served by GitHub Pages from the
-`main` branch. To add the Buy Me a Coffee QR, drop `coffee-qr.png` in the repo
-root — the app already points at it.
+`main` branch. The Buy Me a Coffee QR lives at `coffee-qr.jpg` in the repo root
+(the app points at it); replace that file to change the QR.
