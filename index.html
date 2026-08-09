@@ -1610,7 +1610,10 @@ function dS(){SK=SUSTREAK;var t=SUSTREAK>0?("&#128293; "+SUSTREAK+" day"+(SUSTRE
 // ===================== AI ASSISTANT =====================
 var _aiHist=[];      // conversation history sent to the model (Anthropic message format)
 var _aiBusy=false;
+var _aiPending=null; // a pending clarifying question in local (no-API) mode
+var _aiMode="api";   // "api" when a Worker is configured, else "local" command engine
 var DAY_NAMES={sunday:0,sun:0,monday:1,mon:1,tuesday:2,tue:2,tues:2,wednesday:3,wed:3,thursday:4,thu:4,thurs:4,friday:5,fri:5,saturday:6,sat:6};
+var DAYWORDS=[["sunday","sun"],["monday","mon"],["tuesday","tue"],["wednesday","wed"],["thursday","thu"],["friday","fri"],["saturday","sat"]];
 
 // Convert a natural day spec into an array of weekday ints (0=Sun..6=Sat).
 function aiParseDays(days,frequency){
@@ -1734,6 +1737,114 @@ function aiRunTool(name,input,done){
   }catch(e){done({error:"Failed: "+((e&&e.message)||e)});}
 }
 
+// ===================== LOCAL COMMAND ENGINE (works with no API key) =====================
+// Understands the common requests directly in the browser so the assistant is
+// useful out-of-the-box. If a Worker is configured, aiLoop() (real AI) is used instead.
+var HELP_TEXT="Here's what I can do &#10022;<br>&bull; <b>Add a task</b> — “add drink water every day at 9am”<br>&bull; <b>Complete</b> — “mark drink water done”<br>&bull; <b>List</b> — “show my tasks”<br>&bull; <b>Delete</b> — “delete drink water”<br>&bull; <b>Start a goal</b> — “start a 30 day no sugar goal”<br>&bull; <b>Show up</b> — “I showed up today”<br>&bull; <b>Status</b> — “what's my status?”<br>&bull; <b>Open a page</b> — “open calendar”";
+
+function aiDaysFromText(low){var out=[];for(var i=0;i<DAYWORDS.length;i++){if(new RegExp("\\b("+DAYWORDS[i][0]+"|"+DAYWORDS[i][1]+")\\b").test(low))out.push(DAYWORDS[i][0]);}return out;}
+function aiStripSched(s){
+  s=" "+s+" ";
+  s=s.replace(/\bat\s+\d{1,2}(:\d{2})?\s*(am|pm)?/ig," ");
+  s=s.replace(/\b\d{1,2}\s*(am|pm)\b/ig," ");
+  s=s.replace(/\b(every ?day|daily|each day|week ?days?|week ?ends?)\b/ig," ");
+  for(var i=0;i<DAYWORDS.length;i++)s=s.replace(new RegExp("\\b("+DAYWORDS[i][0]+"|"+DAYWORDS[i][1]+")\\b","ig")," ");
+  s=s.replace(/\bon\b/ig," ").replace(/\band\b/ig," ");
+  return s.replace(/[,\s]+/g," ").trim();
+}
+function aiTaskNameLoose(t){return aiStripSched(t).slice(0,60);}
+function aiTaskName(t){
+  var s=t.replace(/^\s*(please\s+)?(add|create|new|make|set ?up|schedule|remind me to)\s+/i,"");
+  s=s.replace(/^\s*(a|an|the)\s+/i,"");
+  s=s.replace(/^\s*(task|habit|reminder|goal)\b\s*/i,"");
+  s=s.replace(/^\s*(to|for|called|named|:)\s+/i,"");
+  s=aiStripSched(s).replace(/\b(task|habit|reminder)\b\s*$/i,"").trim();
+  return s.slice(0,60);
+}
+function aiStripVerb(t,verbs){
+  var s=t.replace(new RegExp("^\\s*(please\\s+)?(i\\s+)?("+verbs+")\\s+","i"),"");
+  s=s.replace(/^\s*(the|my)\s+/i,"");
+  s=s.replace(/\b(as\s+)?(done|complete|completed|off|for today|today)\b/ig," ");
+  s=s.replace(/\b(task|habit)\b/ig," ");
+  return s.replace(/[,\s]+/g," ").trim();
+}
+function aiSchedFromText(low){
+  var r={};
+  if(/\b(every ?day|daily|each day)\b/.test(low))r.frequency="daily";
+  else if(/\bweek ?days?\b/.test(low))r.frequency="weekdays";
+  else if(/\bweek ?ends?\b/.test(low))r.frequency="weekends";
+  else{var ds=aiDaysFromText(low);if(ds.length)r.days=ds;}
+  var tm=low.match(/\bat\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/)||low.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/);
+  if(tm)r.time=tm[1].replace(/\s+/g,"");
+  return r;
+}
+function aiGoalParse(t){
+  var low=t.toLowerCase(),m=low.match(/(\d+)\s*days?/),days=m?parseInt(m[1]):0;
+  var s=t.replace(/^\s*(please\s+)?(start|begin|create|launch|make|new)\s+/i,"");
+  s=s.replace(/^\s*(a|an|the)\s+/i,"");
+  s=s.replace(/\b\d+\s*days?\b/ig," ").replace(/\b(goal|challenge)\b/ig," ").replace(/\bfor\b/ig," ");
+  s=s.replace(/[,\s]+/g," ").trim();
+  if(!days){var lead=s.match(/^(\d+)\b/);if(lead)days=parseInt(lead[1]);}
+  return {name:s.slice(0,60),days:days};
+}
+function aiConfirmMsg(name,out){
+  if(out&&out.error)return "&#9888;&#65039; "+es(out.error);
+  if(name==="add_task")return "&#9989; Added <b>"+es(out.added)+"</b> — "+es(out.schedule)+(out.time&&out.time!=="none"?" at "+es(out.time):"")+".";
+  if(name==="complete_task_today")return "Nice — <b>"+es(out.completed)+"</b> done for today! &#128293;";
+  if(name==="delete_task")return "Deleted <b>"+es(out.deleted)+"</b>.";
+  if(name==="start_goal")return "&#127919; Started <b>"+es(out.goal)+"</b> — "+out.days+" days, ends "+es(out.ends)+".";
+  if(name==="mark_show_up")return out.already?("You already showed up today &#128293; Streak: "+out.streak+"."):("&#128293; Logged! Your streak is now <b>"+out.streak+"</b> (+5 coins).");
+  if(name==="navigate")return "Opened <b>"+es(out.page)+"</b> for you.";
+  if(name==="list_tasks"){if(!out.count)return "You have no active tasks yet. Try “add drink water every day”.";return "You have "+out.count+" task"+(out.count>1?"s":"")+":<br>"+out.tasks.map(function(t){return "&bull; <b>"+es(t.name)+"</b> — "+es(t.schedule)+(t.time?" at "+es(t.time):"");}).join("<br>");}
+  if(name==="get_status"){var tt=out.todaysTasks||[],dn=tt.filter(function(x){return x.done;}).length;return "&#128293; Show-up streak: <b>"+out.showUpStreak+"</b> (best "+out.bestStreak+")<br>&#129689; Coins: "+out.coins+"<br>&#128221; Tasks: "+out.activeTasks+" &nbsp;&#127919; Goals: "+out.activeGoals+"<br>Today: <b>"+dn+"/"+tt.length+"</b> done"+(out.showedUpToday?" &middot; showed up &#10003;":"");}
+  return "Done.";
+}
+function aiDoTool(name,input){aiTyping(true);aiRunTool(name,input,function(out){aiTyping(false);aiBubble("a",aiConfirmMsg(name,out));});}
+function aiClarify(intent,slots,q){_aiPending={intent:intent,slots:slots||{}};aiBubble("a",q);}
+
+function aiLocalHandle(t){
+  var low=t.toLowerCase().trim();
+  if(_aiPending)return aiLocalContinue(t,low);
+  if(/^(help|hi|hey|hello|what can you do|commands|menu|\?)$/.test(low)||/\bwhat can you do\b/.test(low)){aiBubble("a",HELP_TEXT);return;}
+  if(/\b(show(ed)? ?up|smash it|check ?in|i'?m here|log (my )?show)\b/.test(low)){aiDoTool("mark_show_up",{});return;}
+  if((/\b(status|stats|progress|how am i|how'?m i|streak|coins)\b/.test(low))&&!/\b(add|start|begin|create)\b/.test(low)){aiDoTool("get_status",{});return;}
+  if(/^tasks?\??$/.test(low)||/\bmy tasks\b/.test(low)||(/\b(list|show|see|view)\b/.test(low)&&/\btasks?\b/.test(low))){aiDoTool("list_tasks",{});return;}
+  var nm=low.match(/\b(go to|open|show me|take me to|navigate to|switch to)\s+(dashboard|home|show ?up|goals?|today|calendar|tasks?|rewards?)/);
+  if(nm){var pg=nm[2].replace(/\s+/g,"");if(pg==="home")pg="dashboard";if(pg==="goal")pg="goals";if(pg==="task")pg="tasks";if(pg==="reward")pg="rewards";aiDoTool("navigate",{page:pg});return;}
+  if(/\b(start|begin|launch)\b.*\b(goal|challenge)\b/.test(low)||/\b(start|begin|launch)\b\s+(a\s+)?\d+\s*day/.test(low)||/\b(75 ?hard|no ?sugar|100 ?days? ?code)\b/.test(low)){
+    var g=aiGoalParse(t);
+    if(!g.name){aiClarify("goal_name",{days:g.days},"What's the goal called?");return;}
+    if(!g.days){aiClarify("goal_days",{name:g.name},"How many days should “"+es(g.name)+"” run for?");return;}
+    aiDoTool("start_goal",g);return;
+  }
+  if(/\b(mark|complete|completed|tick|finish|finished)\b/.test(low)||/^(did|done)\b/.test(low)){
+    var c=aiStripVerb(t,"mark|complete|completed|tick|finish|finished|did|done");
+    if(!c){aiClarify("complete",{},"Which task did you finish?");return;}
+    aiDoTool("complete_task_today",{name:c});return;
+  }
+  if(/^(delete|remove|drop)\b/.test(low)||(/\b(delete|remove|drop)\b/.test(low)&&/\b(task|habit)\b/.test(low))){
+    var dd=aiStripVerb(t,"delete|remove|drop");
+    if(!dd){aiClarify("delete",{},"Which task should I delete?");return;}
+    aiDoTool("delete_task",{name:dd});return;
+  }
+  if(/\b(add|create|make|schedule|set ?up)\b/.test(low)||/^new\b/.test(low)||/\bremind me to\b/.test(low)){
+    var an=aiTaskName(t),sc=aiSchedFromText(low),inp={name:an};
+    if(!an){aiClarify("add",sc,"Sure — what should I call the task?");return;}
+    if(sc.frequency)inp.frequency=sc.frequency;if(sc.days)inp.days=sc.days;if(sc.time)inp.time=sc.time;
+    aiDoTool("add_task",inp);return;
+  }
+  aiBubble("a","I can add or complete tasks, start goals, log your show-up, list tasks, or show your status. Try <b>“add read 10 pages every day at 9pm”</b> — or type <b>help</b>.");
+}
+function aiLocalContinue(t,low){
+  var p=_aiPending;_aiPending=null;
+  if(/^(cancel|never ?mind|nvm|forget it|stop|no thanks?)$/.test(low)){aiBubble("a","Okay, cancelled.");return;}
+  if(p.intent==="add"){var sc=aiSchedFromText(low),m=p.slots||{},inp={name:aiTaskNameLoose(t)};if(sc.frequency||m.frequency)inp.frequency=sc.frequency||m.frequency;if(sc.days||m.days)inp.days=sc.days||m.days;if(sc.time||m.time)inp.time=sc.time||m.time;if(!inp.name){aiBubble("a","I still need a name — what should I call it?");_aiPending={intent:"add",slots:m};return;}aiDoTool("add_task",inp);return;}
+  if(p.intent==="complete"){aiDoTool("complete_task_today",{name:t.trim()});return;}
+  if(p.intent==="delete"){aiDoTool("delete_task",{name:t.trim()});return;}
+  if(p.intent==="goal_name"){var gn=t.trim();if(!p.slots.days){aiClarify("goal_days",{name:gn},"How many days should “"+es(gn)+"” run for?");return;}aiDoTool("start_goal",{name:gn,days:p.slots.days});return;}
+  if(p.intent==="goal_days"){var dm=low.match(/(\d+)/),days=dm?parseInt(dm[1]):30;aiDoTool("start_goal",{name:p.slots.name,days:days});return;}
+}
+
 // ---- Chat UI ----
 function openAI(){
   var old=document.getElementById("aiPanel");if(old){old.remove();return;}
@@ -1744,14 +1855,13 @@ function openAI(){
   document.body.appendChild(p);
   document.getElementById("aiX").onclick=function(){p.remove();};
   var body=document.getElementById("aiBody");
-  if(!AI_PROXY_URL){
-    body.innerHTML='<div class="ai-setup">&#10022; The AI assistant isn\'t connected yet.<br><br>Deploy the free Cloudflare Worker and paste its URL into <code>AI_PROXY_URL</code> in <code>index.html</code>.<br><br>See <code>DEPLOY-worker.md</code> for the 15-minute guide.</div>';
-    document.getElementById("aiSend").disabled=true;document.getElementById("aiIn").disabled=true;
-    document.getElementById("aiChips").style.display="none";return;
-  }
-  // Greeting (not part of model history)
-  if(!_aiHist.length){aiBubble("a","Hey "+((UD.name||"there").split(" ")[0])+"! &#10022; I can add tasks, start goals, tick things off, or log your show-up. Just tell me what you need.");}
-  else{ // re-render prior conversation
+  var first=(UD.name||"there").split(" ")[0];
+  _aiMode=AI_PROXY_URL?"api":"local";_aiPending=null;
+  if(_aiMode==="local"){
+    // Works right now with the built-in command engine — no setup needed.
+    aiBubble("a","Hey "+es(first)+"! &#10022; Tell me what to do and I'll handle it — like <b>“add drink water every day at 9am”</b>, <b>“mark drink water done”</b>, <b>“start a 30 day no sugar goal”</b>, <b>“I showed up today”</b>, or <b>“what's my status?”</b>");
+  }else if(!_aiHist.length){aiBubble("a","Hey "+es(first)+"! &#10022; I can add tasks, start goals, tick things off, or log your show-up. Just tell me what you need.");}
+  else{ // re-render prior conversation (API mode)
     for(var i=0;i<_aiHist.length;i++){var m=_aiHist[i];if(typeof m.content==="string")aiBubble(m.role==="user"?"u":"a",es(m.content));
       else if(Array.isArray(m.content)){for(var j=0;j<m.content.length;j++){var c=m.content[j];if(c.type==="text"&&m.role!=="user")aiBubble("a",es(c.text));}}}
   }
@@ -1766,7 +1876,7 @@ function openAI(){
 }
 function aiScroll(){var b=document.getElementById("aiBody");if(b)b.scrollTop=b.scrollHeight;}
 function aiBubble(kind,html){var b=document.getElementById("aiBody");if(!b)return null;var d=document.createElement("div");d.className="ai-msg "+kind;d.innerHTML=html;b.appendChild(d);aiScroll();return d;}
-function aiAct(txt){aiBubble("act","&#9889; "+es(txt));}
+function aiAct(txt){if(_aiMode==="local")return;aiBubble("act","&#9889; "+es(txt));}
 function aiTyping(on){var b=document.getElementById("aiBody");if(!b)return;var ex=document.getElementById("aiTyping");if(on){if(ex)return;var d=document.createElement("div");d.className="ai-typing";d.id="aiTyping";d.innerHTML="<span></span><span></span><span></span>";b.appendChild(d);aiScroll();}else if(ex)ex.remove();}
 
 function aiSubmit(){
@@ -1774,8 +1884,8 @@ function aiSubmit(){
   var txt=(inp.value||"").trim();if(!txt)return;
   inp.value="";inp.style.height="auto";
   aiBubble("u",es(txt));
-  _aiHist.push({role:"user",content:txt});
-  aiLoop();
+  if(_aiMode==="api"){_aiHist.push({role:"user",content:txt});aiLoop();}
+  else aiLocalHandle(txt);
 }
 
 // Agentic loop: call the proxy, run any tools, feed results back, repeat.
