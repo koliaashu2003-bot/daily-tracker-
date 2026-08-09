@@ -413,6 +413,42 @@ label{font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bot
 /* Terms */
 .terms h4{font-family:var(--sans);font-size:13px;font-weight:800;color:var(--text);margin:16px 0 5px;text-transform:uppercase;letter-spacing:.5px}
 .terms p{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:6px}
+
+/* AI Assistant */
+.ai-fab{position:fixed;right:18px;bottom:22px;z-index:90;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--lemon);font-size:24px;box-shadow:0 8px 22px rgba(124,10,1,.4);display:flex;align-items:center;justify-content:center;transition:transform .2s;animation:aiFloat 3.4s ease-in-out infinite}
+.ai-fab:hover{transform:scale(1.08) rotate(6deg)}
+.ai-fab:active{transform:scale(.94)}
+@keyframes aiFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media(max-width:900px){.ai-fab{bottom:72px;right:14px;width:52px;height:52px;font-size:21px}}
+.ai-panel{position:fixed;right:18px;bottom:22px;z-index:120;width:380px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 40px);background:var(--bg2);border:1px solid var(--border2);border-radius:20px;box-shadow:0 24px 60px rgba(80,10,0,.35);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom right;animation:aiIn .32s cubic-bezier(.2,.9,.25,1.1) both;perspective:900px}
+@keyframes aiIn{from{opacity:0;transform:translateY(24px) scale(.85) rotateX(12deg)}to{opacity:1;transform:none}}
+@media(max-width:900px){.ai-panel{right:8px;left:8px;bottom:64px;width:auto;height:70vh}}
+.ai-head{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--lemon);flex-shrink:0}
+.ai-head .ai-orb{width:30px;height:30px;border-radius:50%;background:var(--lemon);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 0 3px rgba(255,251,212,.25);animation:aiFloat 2.6s ease-in-out infinite}
+.ai-head .ai-ttl{font-family:var(--display);letter-spacing:1px;font-size:17px;line-height:1}
+.ai-head .ai-sub{font-size:10.5px;opacity:.8;margin-top:2px}
+.ai-head .ai-x{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:var(--lemon);width:30px;height:30px;border-radius:9px;cursor:pointer;font-size:15px}
+.ai-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.ai-msg{max-width:84%;padding:10px 13px;border-radius:15px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;animation:aiMsg .3s ease both}
+@keyframes aiMsg{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.ai-msg.u{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:5px}
+.ai-msg.a{align-self:flex-start;background:var(--card);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:5px}
+.ai-msg.act{align-self:flex-start;background:var(--accent-bg);color:var(--accent-dark);border:1px dashed var(--accent2);font-size:12px;font-weight:600;padding:7px 11px}
+.ai-typing{align-self:flex-start;display:flex;gap:4px;padding:11px 14px;background:var(--card);border:1px solid var(--border);border-radius:15px}
+.ai-typing span{width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:.5;animation:aiDot 1s infinite}
+.ai-typing span:nth-child(2){animation-delay:.15s}.ai-typing span:nth-child(3){animation-delay:.3s}
+@keyframes aiDot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.ai-foot{flex-shrink:0;border-top:1px solid var(--border);background:var(--bg2);padding:10px}
+.ai-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.ai-chip{flex-shrink:0;background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:600;padding:6px 11px;border-radius:20px;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
+.ai-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ai-inrow{display:flex;gap:8px;align-items:flex-end}
+.ai-inrow textarea{flex:1;resize:none;border:1px solid var(--border2);border-radius:12px;padding:10px 12px;font-size:13.5px;font-family:var(--sans);background:var(--card);color:var(--text);max-height:90px;line-height:1.4}
+.ai-inrow textarea:focus{outline:none;border-color:var(--accent)}
+.ai-send{flex-shrink:0;width:42px;height:42px;border-radius:12px;border:none;background:var(--accent);color:var(--lemon);font-size:17px;cursor:pointer}
+.ai-send:disabled{opacity:.5;cursor:default}
+.ai-setup{margin:auto;text-align:center;color:var(--text2);font-size:13px;line-height:1.6;padding:18px}
+.ai-setup code{background:var(--card2);padding:2px 6px;border-radius:5px;font-size:11.5px}
 </style>
 </head>
 <body>
@@ -432,6 +468,11 @@ var U=null,UD=null,CD=new Date(),CM=new Date(),PD={},LD="",SK=0,currentPage="das
 var SUD={coins:0,best:0,total:0,freezes:[]},SUMAP={},SUSTREAK=0,_camStream=null;
 var COFFEE_QR="coffee-qr.jpg";// path to the Buy Me a Coffee QR image (falls back to a placeholder if missing)
 var _duelUnsub=null;// live listener for the active duel
+// ===== AI Assistant =====
+// Paste your Cloudflare Worker URL here (see DEPLOY-worker.md). The Worker holds
+// your Anthropic API key server-side; this page never sees the key. Leave blank
+// to hide the assistant.
+var AI_PROXY_URL="";
 // Optional: paste your Formspree endpoint (https://formspree.io/f/xxxx) to also email feedback to yourself.
 var FEEDBACK_ENDPOINT="";
 // Optional: get instant feedback on Telegram. TELEGRAM_TOKEN from @BotFather, TELEGRAM_CHAT_ID from
@@ -544,7 +585,7 @@ function buildDayPills(container,selectedArr,preselected){
   };
 }
 
-function rmBnav(){var b=document.getElementById("bnav");if(b)b.parentNode.removeChild(b);}
+function rmBnav(){var b=document.getElementById("bnav");if(b)b.parentNode.removeChild(b);var f=document.getElementById("aiFab");if(f)f.remove();var p=document.getElementById("aiPanel");if(p)p.remove();}
 function showLogin(){
   rmBnav();
   document.getElementById("root").innerHTML='<div class="login"><div class="login-logo">&#128293;</div><h1>Kairos</h1><p>Seize the moment.<br>Show up daily. Keep the chain.</p><button class="g-btn" id="gl"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Sign in with Google</button><div style="max-width:260px;margin-top:44px"><div class="feat"><span class="feat-icon">&#128293;</span> Daily Show Up streak &amp; chain</div><div class="feat"><span class="feat-icon">&#9876;&#65039;</span> Challenge your bestie 1v1</div><div class="feat"><span class="feat-icon">&#128197;</span> Day-specific task scheduling</div><div class="feat"><span class="feat-icon">&#127942;</span> Rewards, milestones &amp; coins</div><div class="feat"><span class="feat-icon">&#128229;</span> Import &amp; export via Excel</div></div></div>';
@@ -723,6 +764,10 @@ function showApp(){
   bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="showup"><span class="ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
   document.body.appendChild(bn);
   bn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
+  // AI assistant floating button
+  var oldFab=document.getElementById("aiFab");if(oldFab)oldFab.remove();
+  var fab=document.createElement("button");fab.id="aiFab";fab.className="ai-fab";fab.title="AI Assistant";fab.innerHTML="&#10022;";
+  fab.onclick=openAI;document.body.appendChild(fab);
   // Sidebar nav
   var sn=document.getElementById("snav");
   if(sn)sn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
@@ -759,6 +804,7 @@ function openMenu(){
   var dw=document.createElement("div");dw.className="drawer";
   var av=su(UD.photo)?'<img src="'+su(UD.photo)+'" alt="">':'<div class="dh-av">&#128100;</div>';
   var items=[
+    {ic:"&#10022;",t:"AI Assistant",s:"Automate your schedule by chat",fn:"ai"},
     {ic:"&#128100;",t:"Profile",s:"Your account & stats",fn:"profile"},
     {ic:(_soundOn?"&#128266;":"&#128263;"),t:"Sound "+(_soundOn?"On":"Off"),s:(_soundOn?"Tap to mute clicks":"Tap to unmute clicks"),fn:"sound"},
     {ic:"&#128203;",t:"Terms & Conditions",s:"How Kairos works & your data",fn:"terms"},
@@ -779,7 +825,7 @@ function openMenu(){
       this.querySelector(".di-s").textContent=_soundOn?"Tap to mute clicks":"Tap to unmute clicks";
       if(_soundOn)clickSound();return;}
     close();setTimeout(function(){
-    if(fn==="profile")openProfile();else if(fn==="terms")openTerms();else if(fn==="coffee")openCoffee();else if(fn==="signout"){confirmDlg({title:"Sign out?",yes:"Sign Out",icon:"&#128075;"},function(){au.signOut();});}
+    if(fn==="ai")openAI();else if(fn==="profile")openProfile();else if(fn==="terms")openTerms();else if(fn==="coffee")openCoffee();else if(fn==="signout"){confirmDlg({title:"Sign out?",yes:"Sign Out",icon:"&#128075;"},function(){au.signOut();});}
   },220);};});
 }
 function openProfile(){
@@ -1539,6 +1585,215 @@ function gC(uid){var ch="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",h=0;for(var i=0;i<uid
 // Streak shown across the app = the Show Up streak (already loaded in one query by loadSU).
 // This replaces the old task-completion streak that made up to 120 sequential Firestore reads on load.
 function dS(){SK=SUSTREAK;var t=SUSTREAK>0?("&#128293; "+SUSTREAK+" day"+(SUSTREAK>1?"s":"")+" streak"):"Start your streak today";var el=document.getElementById("stk");if(el)el.innerHTML=t;var el2=document.getElementById("stk2");if(el2)el2.innerHTML=t;}
+
+// ===================== AI ASSISTANT =====================
+var _aiHist=[];      // conversation history sent to the model (Anthropic message format)
+var _aiBusy=false;
+var DAY_NAMES={sunday:0,sun:0,monday:1,mon:1,tuesday:2,tue:2,tues:2,wednesday:3,wed:3,thursday:4,thu:4,thurs:4,friday:5,fri:5,saturday:6,sat:6};
+
+// Convert a natural day spec into an array of weekday ints (0=Sun..6=Sat).
+function aiParseDays(days,frequency){
+  if(frequency){var f=(""+frequency).toLowerCase();
+    if(f==="daily"||f==="everyday"||f==="every day")return [0,1,2,3,4,5,6];
+    if(f==="weekdays")return [1,2,3,4,5];
+    if(f==="weekends"||f==="weekend")return [0,6];}
+  var out=[];
+  if(Array.isArray(days)){for(var i=0;i<days.length;i++){var k=(""+days[i]).toLowerCase().trim();
+    if(k==="daily"||k==="everyday")return [0,1,2,3,4,5,6];
+    if(k==="weekdays")return [1,2,3,4,5];
+    if(k==="weekends")return [0,6];
+    if(DAY_NAMES.hasOwnProperty(k)&&out.indexOf(DAY_NAMES[k])===-1)out.push(DAY_NAMES[k]);}}
+  return out.length?out.sort():[0,1,2,3,4,5,6];// default: every day
+}
+function aiFindTask(name){
+  if(!name)return null;var n=(""+name).toLowerCase().trim(),list=(UD.tasks||[]);
+  for(var i=0;i<list.length;i++)if((list[i].name||"").toLowerCase()===n)return list[i];
+  for(var i=0;i<list.length;i++)if((list[i].name||"").toLowerCase().indexOf(n)!==-1)return list[i];
+  return null;
+}
+function aiDayLabel(arr){if(arr.length===7)return "every day";if(arr.length===5&&arr.indexOf(0)===-1&&arr.indexOf(6)===-1)return "weekdays";if(arr.length===2&&arr.indexOf(0)!==-1&&arr.indexOf(6)!==-1)return "weekends";return arr.map(function(d){return DN[d];}).join(", ");}
+
+// ---- Tool definitions (Anthropic tool-use schema) ----
+var AI_TOOLS=[
+  {name:"add_task",description:"Create a new recurring daily task/habit on the user's tracker. Ask for the name and schedule if the user hasn't given them.",input_schema:{type:"object",properties:{
+    name:{type:"string",description:"Short task name, e.g. 'Morning run'"},
+    frequency:{type:"string",enum:["daily","weekdays","weekends"],description:"Use for common schedules. Omit if specific days are given."},
+    days:{type:"array",items:{type:"string",enum:["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]},description:"Specific weekdays. Omit if 'frequency' is used."},
+    time:{type:"string",description:"Optional time of day as free text, e.g. '7am' or '18:30'."},
+    description:{type:"string",description:"Optional short note."}
+  },required:["name"]}},
+  {name:"complete_task_today",description:"Mark one of the user's existing tasks as done for TODAY.",input_schema:{type:"object",properties:{name:{type:"string",description:"Name (or part of the name) of the task to tick off."}},required:["name"]}},
+  {name:"list_tasks",description:"List the user's current active tasks with their schedules.",input_schema:{type:"object",properties:{}}},
+  {name:"delete_task",description:"Permanently delete one of the user's tasks by name. Confirm with the user first if unsure.",input_schema:{type:"object",properties:{name:{type:"string"}},required:["name"]}},
+  {name:"start_goal",description:"Start a longer challenge/goal (e.g. '30 day no sugar', '75 hard'). Uses a duration in days.",input_schema:{type:"object",properties:{
+    name:{type:"string",description:"Goal name."},
+    days:{type:"integer",description:"Duration in days (e.g. 30, 75, 100)."},
+    description:{type:"string",description:"Optional one-line description."}
+  },required:["name","days"]}},
+  {name:"mark_show_up",description:"Log that the user 'showed up' today (their daily streak commitment).",input_schema:{type:"object",properties:{}}},
+  {name:"get_status",description:"Get the user's current stats: show-up streak, coins, total tasks/goals, and today's tasks with completion state.",input_schema:{type:"object",properties:{}}},
+  {name:"navigate",description:"Switch the app to a page so the user can see it.",input_schema:{type:"object",properties:{page:{type:"string",enum:["dashboard","showup","goals","today","calendar","tasks","rewards"]}},required:["page"]}}
+];
+
+function aiSystemPrompt(){
+  var name=(UD&&UD.name?UD.name.split(" ")[0]:"there");
+  var today=new Date();
+  return "You are Kairos AI, a warm, concise assistant built into the Kairos habit-tracking app. "+
+    "You help "+name+" manage their habits by calling tools — you don't just give advice, you take action. "+
+    "Today is "+DNF[today.getDay()]+", "+today.toDateString()+". The user's local date string is "+td()+". "+
+    "Guidelines: "+
+    "1) When the user asks to add/complete/delete a task, start a goal, mark a show-up, or check status, call the matching tool. "+
+    "2) If a required detail is missing (e.g. a task name or which days), ask ONE short clarifying question instead of guessing. "+
+    "3) After a tool succeeds, confirm what you did in one friendly sentence. Keep replies short (1-3 sentences), no markdown headers. "+
+    "4) 'Every day' = daily; 'weekdays' = Mon-Fri; 'weekends' = Sat+Sun. "+
+    "5) You can only act on this user's own data. Be encouraging about their streak.";
+}
+
+// ---- Execute a tool call locally against the user's data ----
+function aiRunTool(name,input,done){
+  input=input||{};
+  try{
+    if(name==="add_task"){
+      var tn=(input.name||"").trim();if(!tn){done({error:"No task name given."});return;}
+      var arr=aiParseDays(input.days,input.frequency);
+      var task={id:"t_"+Date.now(),name:tn,desc:(input.description||"").trim(),time:(input.time||"").trim(),days:arr,numId:"",numLabel:"",startDate:td()};
+      UD.tasks=UD.tasks||[];UD.tasks.push(task);
+      saveUD(function(){if(currentPage==="tasks"||currentPage==="today"){LD="";renderPage();}
+        done({ok:true,added:tn,schedule:aiDayLabel(arr),time:task.time||"none"});});
+      aiAct("Added task: "+tn+" ("+aiDayLabel(arr)+")");return;
+    }
+    if(name==="complete_task_today"){
+      var t=aiFindTask(input.name);if(!t){done({error:"No task found matching '"+(input.name||"")+"'."});return;}
+      ld(td(),function(o){o=o||{};o[t.id]=true;sv(td(),o,function(){
+        if(currentPage==="today"&&fm(CD)===td()){PD=o;LD="";renderPage();}
+        done({ok:true,completed:t.name});});});
+      aiAct("Marked done today: "+t.name);return;
+    }
+    if(name==="list_tasks"){
+      var list=(UD.tasks||[]).filter(function(t){return !t.archived;}).map(function(t){return {name:t.name,schedule:aiDayLabel(t.days||[]),time:t.time||""};});
+      done({tasks:list,count:list.length});return;
+    }
+    if(name==="delete_task"){
+      var td2=aiFindTask(input.name);if(!td2){done({error:"No task found matching '"+(input.name||"")+"'."});return;}
+      UD.tasks=(UD.tasks||[]).filter(function(x){return x.id!==td2.id;});
+      saveUD(function(){if(currentPage==="tasks"||currentPage==="today"){LD="";renderPage();}done({ok:true,deleted:td2.name});});
+      aiAct("Deleted task: "+td2.name);return;
+    }
+    if(name==="start_goal"){
+      var gn=(input.name||"").trim();if(!gn){done({error:"No goal name given."});return;}
+      var d=parseInt(input.days)||30;if(d<1)d=30;
+      var st=td(),goal={id:"g_"+Date.now(),presetId:"",icon:"&#127919;",name:gn,desc:(input.description||"").trim(),dur:d+" days",days:d,baseDays:d,rounds:1,subs:[],rule:"all",start:st,target:addDaysStr(st,d),log:[],createdAt:Date.now()};
+      UD.goals=UD.goals||[];UD.goals.push(goal);
+      saveGoals(function(){if(currentPage==="goals")renderPage();done({ok:true,goal:gn,days:d,ends:goal.target});});
+      aiAct("Started goal: "+gn+" ("+d+" days)");return;
+    }
+    if(name==="mark_show_up"){
+      if(SUMAP[td()]&&SUMAP[td()].done){done({ok:true,already:true,streak:SUSTREAK});return;}
+      doShowUp("Logged via AI assistant","",false);
+      aiAct("Logged today's show-up");
+      setTimeout(function(){done({ok:true,streak:SUSTREAK,coins:SUD.coins});},350);return;
+    }
+    if(name==="get_status"){
+      var tasksToday=getTasksForDate(td());
+      ld(td(),function(o){o=o||{};
+        var todays=tasksToday.map(function(t){return {name:t.name,done:!!o[t.id]};});
+        done({showUpStreak:SUSTREAK,coins:SUD.coins||0,bestStreak:SUD.best||0,
+          activeTasks:(UD.tasks||[]).filter(function(t){return !t.archived;}).length,
+          activeGoals:(UD.goals||[]).length,showedUpToday:!!(SUMAP[td()]&&SUMAP[td()].done),
+          todaysTasks:todays});});
+      return;
+    }
+    if(name==="navigate"){
+      var pg=input.page;var ok=["dashboard","showup","goals","today","calendar","tasks","rewards"];
+      if(ok.indexOf(pg)===-1){done({error:"Unknown page."});return;}
+      currentPage=pg;if(pg==="today")CD=new Date();renderPage();
+      aiAct("Opened "+pg);done({ok:true,page:pg});return;
+    }
+    done({error:"Unknown tool: "+name});
+  }catch(e){done({error:"Failed: "+((e&&e.message)||e)});}
+}
+
+// ---- Chat UI ----
+function openAI(){
+  var old=document.getElementById("aiPanel");if(old){old.remove();return;}
+  var p=document.createElement("div");p.className="ai-panel";p.id="aiPanel";
+  p.innerHTML='<div class="ai-head"><div class="ai-orb">&#10022;</div><div><div class="ai-ttl">Kairos AI</div><div class="ai-sub">Your habit co-pilot</div></div><button class="ai-x" id="aiX">&#10005;</button></div>'+
+    '<div class="ai-body" id="aiBody"></div>'+
+    '<div class="ai-foot"><div class="ai-chips" id="aiChips"></div><div class="ai-inrow"><textarea id="aiIn" rows="1" placeholder="Ask me to add a task, start a goal..."></textarea><button class="ai-send" id="aiSend">&#10148;</button></div></div>';
+  document.body.appendChild(p);
+  document.getElementById("aiX").onclick=function(){p.remove();};
+  var body=document.getElementById("aiBody");
+  if(!AI_PROXY_URL){
+    body.innerHTML='<div class="ai-setup">&#10022; The AI assistant isn\'t connected yet.<br><br>Deploy the free Cloudflare Worker and paste its URL into <code>AI_PROXY_URL</code> in <code>index.html</code>.<br><br>See <code>DEPLOY-worker.md</code> for the 15-minute guide.</div>';
+    document.getElementById("aiSend").disabled=true;document.getElementById("aiIn").disabled=true;
+    document.getElementById("aiChips").style.display="none";return;
+  }
+  // Greeting (not part of model history)
+  if(!_aiHist.length){aiBubble("a","Hey "+((UD.name||"there").split(" ")[0])+"! &#10022; I can add tasks, start goals, tick things off, or log your show-up. Just tell me what you need.");}
+  else{ // re-render prior conversation
+    for(var i=0;i<_aiHist.length;i++){var m=_aiHist[i];if(typeof m.content==="string")aiBubble(m.role==="user"?"u":"a",es(m.content));
+      else if(Array.isArray(m.content)){for(var j=0;j<m.content.length;j++){var c=m.content[j];if(c.type==="text"&&m.role!=="user")aiBubble("a",es(c.text));}}}
+  }
+  var chips=["Add a task","I showed up today","What's my status?","Start a 30 day goal"];
+  var ch=document.getElementById("aiChips");ch.innerHTML=chips.map(function(c){return '<button class="ai-chip">'+c+'</button>';}).join("");
+  ch.querySelectorAll(".ai-chip").forEach(function(b){b.onclick=function(){document.getElementById("aiIn").value=this.textContent;aiSubmit();};});
+  var inp=document.getElementById("aiIn");
+  inp.addEventListener("input",function(){this.style.height="auto";this.style.height=Math.min(this.scrollHeight,90)+"px";});
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();aiSubmit();}});
+  document.getElementById("aiSend").onclick=aiSubmit;
+  setTimeout(function(){inp.focus();},100);
+}
+function aiScroll(){var b=document.getElementById("aiBody");if(b)b.scrollTop=b.scrollHeight;}
+function aiBubble(kind,html){var b=document.getElementById("aiBody");if(!b)return null;var d=document.createElement("div");d.className="ai-msg "+kind;d.innerHTML=html;b.appendChild(d);aiScroll();return d;}
+function aiAct(txt){aiBubble("act","&#9889; "+es(txt));}
+function aiTyping(on){var b=document.getElementById("aiBody");if(!b)return;var ex=document.getElementById("aiTyping");if(on){if(ex)return;var d=document.createElement("div");d.className="ai-typing";d.id="aiTyping";d.innerHTML="<span></span><span></span><span></span>";b.appendChild(d);aiScroll();}else if(ex)ex.remove();}
+
+function aiSubmit(){
+  if(_aiBusy)return;var inp=document.getElementById("aiIn");if(!inp)return;
+  var txt=(inp.value||"").trim();if(!txt)return;
+  inp.value="";inp.style.height="auto";
+  aiBubble("u",es(txt));
+  _aiHist.push({role:"user",content:txt});
+  aiLoop();
+}
+
+// Agentic loop: call the proxy, run any tools, feed results back, repeat.
+function aiLoop(){
+  _aiBusy=true;var sendBtn=document.getElementById("aiSend");if(sendBtn)sendBtn.disabled=true;
+  aiTyping(true);
+  fetch(AI_PROXY_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({system:aiSystemPrompt(),messages:_aiHist,tools:AI_TOOLS,max_tokens:1024})})
+  .then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
+  .then(function(res){
+    aiTyping(false);
+    if(res.status!==200||res.j.error){
+      var em=res.j&&res.j.error?(res.j.error.message||res.j.error):("HTTP "+res.status);
+      aiBubble("a","&#9888;&#65039; "+es(""+em));aiDone();return;
+    }
+    var msg=res.j;// a Messages API response
+    var blocks=Array.isArray(msg.content)?msg.content:[];
+    // Show any text the model produced this turn
+    for(var i=0;i<blocks.length;i++){if(blocks[i].type==="text"&&blocks[i].text.trim())aiBubble("a",es(blocks[i].text));}
+    // Record the assistant turn verbatim (needed for tool_result correlation)
+    _aiHist.push({role:"assistant",content:blocks});
+    if(msg.stop_reason==="tool_use"){
+      var calls=blocks.filter(function(b){return b.type==="tool_use";});
+      var results=[],pending=calls.length;
+      if(!pending){aiDone();return;}
+      calls.forEach(function(call){
+        aiRunTool(call.name,call.input,function(out){
+          results.push({type:"tool_result",tool_use_id:call.id,content:JSON.stringify(out)});
+          if(--pending===0){
+            _aiHist.push({role:"user",content:results});
+            aiLoop();// continue so the model can react to results
+          }
+        });
+      });
+    }else{aiDone();}
+  })
+  .catch(function(e){aiTyping(false);aiBubble("a","&#9888;&#65039; Couldn't reach the AI. "+es((e&&e.message)||""));aiDone();});
+}
+function aiDone(){_aiBusy=false;var b=document.getElementById("aiSend");if(b)b.disabled=false;var i=document.getElementById("aiIn");if(i)i.focus();}
 </script>
 </body>
 </html>
