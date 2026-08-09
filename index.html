@@ -436,20 +436,6 @@ function sendTelegram(text,cb){
   fetch("https://api.telegram.org/bot"+TELEGRAM_TOKEN+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:TELEGRAM_CHAT_ID,text:text,disable_web_page_preview:true})})
     .then(function(r){return r.json();}).then(function(j){if(cb)cb(j);}).catch(function(e){if(cb)cb({ok:false,description:"Network/CORS error: "+((e&&e.message)||e)});});
 }
-// ===== Click sound (synthesised in-browser — no external file, works offline, no licensing) =====
-var _actx=null,_soundOn=(function(){try{return localStorage.getItem("kairos_sound")!=="off";}catch(e){return true;}})();
-function clickSound(){
-  if(!_soundOn)return;
-  try{
-    if(!_actx)_actx=new (window.AudioContext||window.webkitAudioContext)();
-    if(_actx.state==="suspended")_actx.resume();
-    var t=_actx.currentTime,o=_actx.createOscillator(),g=_actx.createGain();
-    o.type="triangle";o.frequency.setValueAtTime(680,t);o.frequency.exponentialRampToValueAtTime(240,t+0.05);
-    g.gain.setValueAtTime(0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.08);
-    o.connect(g);g.connect(_actx.destination);o.start(t);o.stop(t+0.09);
-  }catch(e){}
-}
-document.addEventListener("pointerdown",function(e){var el=e.target;if(el&&el.closest&&el.closest("button,a,.rw,.gcard,.day-pill,.rule-opt,.ck,.week-day,.cy,.nw-row,[data-p],[data-tid],[data-toggle],[data-sd],[data-cd],[data-wds],[data-nwds],.su-btn,.modal-close,.walk-dots .wd"))clickSound();},true);
 
 function pad(n){return n<10?"0"+n:""+n;}
 function fm(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -748,7 +734,6 @@ function openMenu(){
   var av=su(UD.photo)?'<img src="'+su(UD.photo)+'" alt="">':'<div class="dh-av">&#128100;</div>';
   var items=[
     {ic:"&#128100;",t:"Profile",s:"Your account & stats",fn:"profile"},
-    {ic:(_soundOn?"&#128266;":"&#128263;"),t:"Sound "+(_soundOn?"On":"Off"),s:(_soundOn?"Tap to mute clicks":"Tap to unmute clicks"),fn:"sound"},
     {ic:"&#128203;",t:"Terms & Conditions",s:"How Kairos works & your data",fn:"terms"},
     {ic:"&#9749;",t:"Buy Me a Coffee",s:"Support the app ❤️",fn:"coffee"},
     {ic:"&#128274;",t:"Sign Out",s:"See you tomorrow",fn:"signout"}
@@ -760,13 +745,7 @@ function openMenu(){
   requestAnimationFrame(function(){ov.classList.add("show");dw.classList.add("show");});
   function close(){ov.classList.remove("show");dw.classList.remove("show");setTimeout(function(){if(ov.parentNode)ov.remove();if(dw.parentNode)dw.remove();},300);}
   ov.onclick=close;document.getElementById("dwClose").onclick=close;
-  dw.querySelectorAll(".drawer-item").forEach(function(el){el.onclick=function(){var fn=this.dataset.fn;
-    if(fn==="sound"){_soundOn=!_soundOn;try{localStorage.setItem("kairos_sound",_soundOn?"on":"off");}catch(e){}
-      this.querySelector(".di-ic").innerHTML=_soundOn?"&#128266;":"&#128263;";
-      this.querySelector(".di-t").textContent="Sound "+(_soundOn?"On":"Off");
-      this.querySelector(".di-s").textContent=_soundOn?"Tap to mute clicks":"Tap to unmute clicks";
-      if(_soundOn)clickSound();return;}
-    close();setTimeout(function(){
+  dw.querySelectorAll(".drawer-item").forEach(function(el){el.onclick=function(){var fn=this.dataset.fn;close();setTimeout(function(){
     if(fn==="profile")openProfile();else if(fn==="terms")openTerms();else if(fn==="coffee")openCoffee();else if(fn==="signout"){confirmDlg({title:"Sign out?",yes:"Sign Out",icon:"&#128075;"},function(){au.signOut();});}
   },220);};});
 }
