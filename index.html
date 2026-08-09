@@ -1032,7 +1032,7 @@ function bToday(el,ds,it,fu){
         });
       },500);
     }
-    el.querySelectorAll("[data-tid]").forEach(function(r){r.addEventListener("click",function(e){if(e.target.closest("[data-stop]"))return;var tid=this.dataset.tid;PD[tid]=!PD[tid];_justToggled=PD[tid]?tid:null;bToday(el,ds,it,fu);_justToggled=null;autoSave();});});
+    el.querySelectorAll("[data-tid]").forEach(function(r){r.addEventListener("click",function(e){if(e.target.closest("[data-stop]"))return;var tid=this.dataset.tid;PD[tid]=!PD[tid];_justToggled=PD[tid]?tid:null;bToday(el,ds,it,fu);_justToggled=null;autoSave();if(it)maybeAutoShowUp();});});
     el.querySelectorAll("[data-nid]").forEach(function(n){n.addEventListener("change",function(){PD[this.dataset.nid]=parseInt(this.value)||0;autoSave();});});
   }
 }
@@ -1165,6 +1165,16 @@ function doShowUp(note,thumb,verified){
     saveSUmeta(function(){updateDuelScore();dS();ts("&#128293; You showed up! +5 coins");renderPage();});
   }).catch(function(e){ts("Error: "+e.message);});
 }
+// When every task scheduled for today is ticked, count it as "showing up" —
+// this is what makes the streak, coins, chain, profile and rewards reflect
+// the user's daily task activity (not just the manual Smash It button).
+function maybeAutoShowUp(){
+  if(fm(CD)!==td())return;                              // only for today
+  if(SUMAP[td()]&&SUMAP[td()].done)return;              // already showed up
+  var tks=getTasksForDate(td());if(!tks.length)return;  // nothing scheduled → nothing to complete
+  for(var i=0;i<tks.length;i++){if(!PD[tks[i].id])return;}// some task still unchecked
+  doShowUp("Completed all today's tasks");
+}
 function freezeDay(ds){
   if((SUD.coins||0)<10){ts("Need 10 coins to repair");return;}
   SUD.freezes=SUD.freezes||[];if(SUD.freezes.indexOf(ds)===-1)SUD.freezes.push(ds);
@@ -1233,7 +1243,18 @@ function joinDuel(code){
     }).catch(function(){ts("Couldn't join — database access needed");});
   }).catch(function(){ts("Couldn't reach duel — database access needed");});
 }
-function leaveDuel(){UD.activeDuel="";UD.duelRole="";saveDuelRef(function(){ts("Left duel");renderPage();});}
+function leaveDuel(){
+  var code=UD.activeDuel,role=UD.duelRole;
+  if(_duelUnsub){_duelUnsub();_duelUnsub=null;}// stop listening before we mutate the shared doc
+  function done(){UD.activeDuel="";UD.duelRole="";saveDuelRef(function(){ts("Left duel");renderPage();});}
+  if(code&&role==="host"){
+    // Host leaving ends the duel for BOTH players — the guest's live listener sees the doc vanish.
+    db.collection("duels").doc(code).delete().then(done).catch(done);
+  }else if(code&&role==="guest"){
+    // Guest leaving frees the slot so the host immediately sees "Waiting..." again.
+    db.collection("duels").doc(code).update({guestUid:"",guestName:"",guestPhoto:"",guestScore:0}).then(done).catch(done);
+  }else done();
+}
 function updateDuelScore(){
   if(!UD.activeDuel)return;
   var f=UD.duelRole==="host"?{hostScore:SUSTREAK}:{guestScore:SUSTREAK};
