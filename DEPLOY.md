@@ -33,3 +33,10 @@ firebase deploy --only firestore:rules
 `index.html` is a single self-contained page served by GitHub Pages from the
 `main` branch. The Buy Me a Coffee QR lives at `coffee-qr.jpg` in the repo root
 (the app points at it); replace that file to change the QR.
+
+## AI Assistant (optional)
+The in-app **✦ AI** assistant lets users manage their habits by chat ("add a
+task…", "I showed up today"). It runs on Claude via a tiny Cloudflare Worker
+that keeps your API key server-side — see **[`DEPLOY-worker.md`](./DEPLOY-worker.md)**
+for the ~15-minute setup. Until you paste the Worker URL into `AI_PROXY_URL`
+in `index.html`, the assistant shows a friendly "not connected yet" note.
