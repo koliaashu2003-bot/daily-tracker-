@@ -764,10 +764,8 @@ function showApp(){
   bn.innerHTML='<a href="#" data-p="dashboard"><span class="ico">&#127968;</span>Home</a><a href="#" data-p="showup"><span class="ico">&#128293;</span>Show Up</a><a href="#" data-p="goals"><span class="ico">&#127919;</span>Goals</a><a href="#" data-p="today"><span class="ico">&#9989;</span>Today</a><a href="#" data-p="calendar"><span class="ico">&#128197;</span>Calendar</a><a href="#" data-p="tasks"><span class="ico">&#128221;</span>Tasks</a><a href="#" data-p="rewards"><span class="ico">&#127942;</span>Rewards</a>';
   document.body.appendChild(bn);
   bn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
-  // AI assistant floating button
+  // AI assistant removed — ensure no leftover floating button
   var oldFab=document.getElementById("aiFab");if(oldFab)oldFab.remove();
-  var fab=document.createElement("button");fab.id="aiFab";fab.className="ai-fab";fab.title="AI Assistant";fab.innerHTML="&#10022;";
-  fab.onclick=openAI;document.body.appendChild(fab);
   // Sidebar nav
   var sn=document.getElementById("snav");
   if(sn)sn.onclick=function(e){var a=e.target.closest("[data-p]");if(!a)return;e.preventDefault();currentPage=a.dataset.p;if(a.dataset.p==="today")CD=new Date();renderPage();};
@@ -804,7 +802,6 @@ function openMenu(){
   var dw=document.createElement("div");dw.className="drawer";
   var av=su(UD.photo)?'<img src="'+su(UD.photo)+'" alt="">':'<div class="dh-av">&#128100;</div>';
   var items=[
-    {ic:"&#10022;",t:"AI Assistant",s:"Automate your schedule by chat",fn:"ai"},
     {ic:"&#128100;",t:"Profile",s:"Your account & stats",fn:"profile"},
     {ic:(_soundOn?"&#128266;":"&#128263;"),t:"Sound "+(_soundOn?"On":"Off"),s:(_soundOn?"Tap to mute clicks":"Tap to unmute clicks"),fn:"sound"},
     {ic:"&#128203;",t:"Terms & Conditions",s:"How Kairos works & your data",fn:"terms"},
@@ -825,7 +822,7 @@ function openMenu(){
       this.querySelector(".di-s").textContent=_soundOn?"Tap to mute clicks":"Tap to unmute clicks";
       if(_soundOn)clickSound();return;}
     close();setTimeout(function(){
-    if(fn==="ai")openAI();else if(fn==="profile")openProfile();else if(fn==="terms")openTerms();else if(fn==="coffee")openCoffee();else if(fn==="signout"){confirmDlg({title:"Sign out?",yes:"Sign Out",icon:"&#128075;"},function(){au.signOut();});}
+    if(fn==="profile")openProfile();else if(fn==="terms")openTerms();else if(fn==="coffee")openCoffee();else if(fn==="signout"){confirmDlg({title:"Sign out?",yes:"Sign Out",icon:"&#128075;"},function(){au.signOut();});}
   },220);};});
 }
 function openProfile(){
@@ -931,8 +928,8 @@ function rDash(el,titleHtml){
   var agoals=UD.goals||[];
   if(agoals.length){
     h+='<div class="card" id="dashGoals"><div class="card-t">Goals — mark today</div>';
-    for(var gi=0;gi<agoals.length;gi++){var gg=agoals[gi],gp=goalProgress(gg),gDone=(gg.log||[]).indexOf(ds)!==-1;
-      h+='<div style="display:flex;align-items:center;gap:10px;padding:6px 0"><div class="ring" style="--p:'+gp.pct+';width:38px;height:38px"><div class="ring-in" style="width:28px;height:28px;font-size:10px">'+gp.pct+'</div></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+gg.icon+' '+es(gg.name)+'</div><div style="font-size:10px;color:var(--text3)">Day '+gp.done+(gg.days>0?" of "+gg.days:"")+'</div></div><button class="btn '+(gDone?"btn-ghost":"btn-primary")+' btn-sm dash-gmark" data-g="'+gg.id+'" '+(gDone?"disabled":"")+'>'+(gDone?"&#10003;":"Mark")+'</button></div>';
+    for(var gi=0;gi<agoals.length;gi++){var gg=agoals[gi],gp=goalProgress(gg),gDone=(gg.log||[]).indexOf(ds)!==-1,gStarted=goalStarted(gg);
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:6px 0"><div class="ring" style="--p:'+gp.pct+';width:38px;height:38px"><div class="ring-in" style="width:28px;height:28px;font-size:10px">'+gp.pct+'</div></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+gg.icon+' '+es(gg.name)+'</div><div style="font-size:10px;color:var(--text3)">'+(gStarted?'Day '+gp.done+(gg.days>0?" of "+gg.days:""):'Starts '+mk(gg.start).toLocaleDateString("en-IN",{day:"numeric",month:"short"}))+'</div></div>'+(gStarted?'<button class="btn '+(gDone?"btn-ghost":"btn-primary")+' btn-sm dash-gmark" data-g="'+gg.id+'" '+(gDone?"disabled":"")+'>'+(gDone?"&#10003;":"Mark")+'</button>':'<button class="btn btn-ghost btn-sm" disabled>Soon</button>')+'</div>';
     }
     h+='</div>';
   }
@@ -1180,42 +1177,18 @@ function freezeDay(ds){
   SUD.freezes=SUD.freezes||[];if(SUD.freezes.indexOf(ds)===-1)SUD.freezes.push(ds);
   SUD.coins-=10;computeSU();saveSUmeta(function(){updateDuelScore();dS();ts("&#10052;&#65039; Day repaired! Chain saved");renderPage();});
 }
-// Camera-verified check-in
+// Simple check-in — no camera verification, just an optional note
 function suCheckIn(){
   if(SUMAP[td()]&&SUMAP[td()].done){ts("Already showed up today");return;}
   var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal";
   var h='<div class="modal-title"><span>Show Up Today</span><button class="modal-close" id="suX">&#10005;</button></div>';
-  h+='<div style="font-size:12px;color:var(--text3);margin-bottom:12px">Snap a proof selfie to verify (optional), add a note, then smash the button.</div>';
-  h+='<div class="cam-box" id="camBox" style="display:none"><video id="camV" autoplay playsinline muted></video><img id="camImg" style="display:none"><canvas id="camC" style="display:none"></canvas></div>';
-  h+='<div style="display:flex;gap:8px;margin:10px 0"><button class="btn btn-ghost btn-sm" id="camOpen">&#128247; Open Camera</button><button class="btn btn-primary btn-sm" id="camSnap" style="display:none">Capture</button><button class="btn btn-ghost btn-sm" id="camRetake" style="display:none">Retake</button></div>';
+  h+='<div style="font-size:12px;color:var(--text3);margin-bottom:12px">Add a note if you like, then smash the button to keep your streak alive.</div>';
   h+='<textarea id="suNote" class="su-note" placeholder="How did you show up today? (optional)" rows="2"></textarea>';
   h+='<button class="btn btn-primary btn-full" id="suGo" style="margin-top:14px;font-size:15px">&#128293; I SHOWED UP</button>';
   md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
-  var thumb=null,verified=false;
-  var V=document.getElementById("camV"),IMG=document.getElementById("camImg"),C=document.getElementById("camC"),box=document.getElementById("camBox");
-  function stopCam(){if(_camStream){_camStream.getTracks().forEach(function(t){t.stop();});_camStream=null;}}
-  function close(){stopCam();if(ov.parentNode)document.body.removeChild(ov);}
+  function close(){if(ov.parentNode)document.body.removeChild(ov);}
   document.getElementById("suX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
-  document.getElementById("camOpen").onclick=function(){
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ts("Camera not available on this device");return;}
-    navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false}).then(function(st){
-      _camStream=st;V.srcObject=st;box.style.display="";V.style.display="";IMG.style.display="none";
-      document.getElementById("camOpen").style.display="none";document.getElementById("camSnap").style.display="";
-    }).catch(function(){ts("Camera permission denied");});
-  };
-  document.getElementById("camSnap").onclick=function(){
-    var w=V.videoWidth||480,hh=V.videoHeight||480,sz=240;C.width=sz;C.height=sz;
-    var ctx=C.getContext("2d"),side=Math.min(w,hh),sx=(w-side)/2,sy=(hh-side)/2;
-    ctx.drawImage(V,sx,sy,side,side,0,0,sz,sz);
-    thumb=C.toDataURL("image/jpeg",0.6);
-    if(thumb.length>200000)thumb=C.toDataURL("image/jpeg",0.4);// keep well under Firestore's 1MB doc limit
-    if(thumb.length>400000)thumb=null;// oversized capture: verify without storing the image
-    verified=true;
-    IMG.src=thumb;IMG.style.display="";V.style.display="none";stopCam();
-    this.style.display="none";document.getElementById("camRetake").style.display="";
-  };
-  document.getElementById("camRetake").onclick=function(){thumb=null;verified=false;IMG.style.display="none";this.style.display="none";document.getElementById("camOpen").style.display="";document.getElementById("camOpen").click();};
-  document.getElementById("suGo").onclick=function(){var n=(document.getElementById("suNote").value||"").trim();close();doShowUp(n,thumb,verified);};
+  document.getElementById("suGo").onclick=function(){var n=(document.getElementById("suNote").value||"").trim();close();doShowUp(n);};
 }
 // Duels (challenge a bestie)
 function genCode(){var ch="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",c="";for(var i=0;i<5;i++)c+=ch[Math.floor(Math.random()*ch.length)];return c;}
@@ -1313,8 +1286,6 @@ function rShowUp(el){
   if(shown){
     h+='<div class="su-flame">&#128293;</div><div class="su-streaknum">'+SUSTREAK+' DAY'+(SUSTREAK===1?'':'S')+'</div>';
     h+='<h2>Showed Up!</h2><div class="su-date">'+dlong+'</div>';
-    var rec=SUMAP[ds];
-    if(rec&&rec.verified)h+='<div style="margin-top:10px"><span class="verified-tag">&#10003; Camera verified</span></div>';
     h+='<div class="su-btn done">&#10003; You\'re here today</div>';
   }else{
     h+='<div class="su-flame">&#128064;</div><h2>Show Up</h2><div class="su-date">'+dlong+'</div>';
@@ -1457,6 +1428,11 @@ var WALK_STEPS=[
 function saveGoals(cb){if(!U){if(cb)cb();return;}db.collection("users").doc(U.uid).update({goals:UD.goals||[]}).then(function(){if(cb)cb();}).catch(function(e){ts("Error: "+e.message);});}
 function addDaysStr(ds,n){var d=mk(ds);d.setDate(d.getDate()+n);return fm(d);}
 function goalProgress(g){var done=(g.log||[]).length,pct=g.days>0?Math.min(100,Math.round(done/g.days*100)):Math.min(100,done*10);return{done:done,pct:pct};}
+// A goal only becomes markable on/after its chosen start date (fixes future-start goals being markable today)
+function goalStarted(g){return !g.start||td()>=g.start;}
+// Which sub-goals are ticked for a given date, and whether every sub-goal is ticked that day
+function goalSubDone(g,ds){return (g.subLog&&g.subLog[ds])||[];}
+function goalAllSubsDone(g,ds){if(!g.subs||!g.subs.length)return false;var arr=goalSubDone(g,ds);for(var i=0;i<g.subs.length;i++)if(arr.indexOf(i)===-1)return false;return true;}
 function attachTilt(card){
   card.addEventListener("pointermove",function(e){
     var r=card.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-0.5,py=(e.clientY-r.top)/r.height-0.5;
@@ -1470,10 +1446,11 @@ function rGoals(el){
   var h='<div class="goal-hero scene"><div class="medallion"><span>&#127919;</span></div><h2>Chase a Goal</h2><p>Pick a challenge, keep the chain, finish it.</p><button class="btn btn-ghost btn-sm" id="howBtn" style="margin-top:10px">&#10024; How it works (3D tour)</button></div>';
   if(goals.length){
     h+='<div class="card"><div class="card-t">Your Active Goals ('+goals.length+')</div>';
-    for(var i=0;i<goals.length;i++){var g=goals[i],p=goalProgress(g),didToday=(g.log||[]).indexOf(td())!==-1;
+    for(var i=0;i<goals.length;i++){var g=goals[i],p=goalProgress(g),didToday=(g.log||[]).indexOf(td())!==-1,started=goalStarted(g);
       h+='<div class="active-goal"><div class="ring" style="--p:'+p.pct+'"><div class="ring-in">'+p.pct+'<small>%</small></div></div>';
-      h+='<div class="ag-info"><div class="ag-name">'+g.icon+' '+es(g.name)+'</div><div class="ag-meta">Day '+p.done+(g.days>0?" of "+g.days:"")+' &middot; '+(g.subs&&g.subs.length?g.subs.length+" sub-goals":"single goal")+'</div></div>';
-      h+='<button class="btn '+(didToday?"btn-ghost":"btn-primary")+' btn-sm goal-mark" data-g="'+g.id+'" '+(didToday?"disabled":"")+'>'+(didToday?"&#10003; Today":"Mark Today")+'</button>';
+      h+='<div class="ag-info"><div class="ag-name">'+g.icon+' '+es(g.name)+'</div><div class="ag-meta">'+(started?'Day '+p.done+(g.days>0?" of "+g.days:""):'Starts '+mk(g.start).toLocaleDateString("en-IN",{day:"numeric",month:"short"}))+' &middot; '+(g.subs&&g.subs.length?g.subs.length+" sub-goals":"single goal")+'</div></div>';
+      if(!started)h+='<button class="btn btn-ghost btn-sm goal-open" data-g="'+g.id+'" disabled>Upcoming</button>';
+      else h+='<button class="btn '+(didToday?"btn-ghost":"btn-primary")+' btn-sm goal-mark" data-g="'+g.id+'" '+(didToday?"disabled":"")+'>'+(didToday?"&#10003; Today":"Mark Today")+'</button>';
       h+='<button class="goal-open" data-g="'+g.id+'" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text3);padding:4px">&#8250;</button></div>';
     }
     h+='</div>';
@@ -1491,24 +1468,59 @@ function rGoals(el){
 }
 function markGoalToday(id){
   var g=(UD.goals||[]).filter(function(x){return x.id===id;})[0];if(!g)return;
+  if(!goalStarted(g)){ts("Starts on "+mk(g.start).toLocaleDateString("en-IN",{day:"numeric",month:"short"}));return;}
   g.log=g.log||[];if(g.log.indexOf(td())!==-1){ts("Already marked today");return;}
   g.log.push(td());SUD.coins=(SUD.coins||0)+3;
   saveGoals(function(){saveSUmeta(function(){ts("&#127919; Progress logged! +3 coins");renderPage();});});
 }
+// Tick/untick a sub-goal for today. In "auto" mode, completing every sub-goal marks the day done automatically;
+// unticking one undoes that day's completion so progress can never be falsely complete.
+function toggleGoalSub(id,si,on,cb){
+  var g=(UD.goals||[]).filter(function(x){return x.id===id;})[0];if(!g)return;
+  if(!goalStarted(g)){ts("Starts on "+mk(g.start).toLocaleDateString("en-IN",{day:"numeric",month:"short"}));return;}
+  var ds=td();g.subLog=g.subLog||{};var arr=g.subLog[ds]?g.subLog[ds].slice():[];
+  var ix=arr.indexOf(si);if(on&&ix===-1)arr.push(si);else if(!on&&ix!==-1)arr.splice(ix,1);
+  g.subLog[ds]=arr;
+  var coinDelta=0,msg="";
+  if(g.rule==="auto"){
+    g.log=g.log||[];var was=g.log.indexOf(ds)!==-1,now=goalAllSubsDone(g,ds);
+    if(now&&!was){g.log.push(ds);SUD.coins=(SUD.coins||0)+3;coinDelta=3;msg="&#127919; Day complete! +3 coins";}
+    else if(!now&&was){g.log.splice(g.log.indexOf(ds),1);}
+  }
+  saveGoals(function(){if(coinDelta)saveSUmeta(function(){if(cb)cb();});else if(cb)cb();if(msg)ts(msg);});
+}
 function openActiveGoal(g){
-  var p=goalProgress(g);
   var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
-  var h='<div class="detail-3d"><div class="modal-title"><span>'+g.icon+' '+es(g.name)+'</span><button class="modal-close" id="agX">&#10005;</button></div>';
-  h+='<div style="text-align:center;margin-bottom:14px"><div class="ring" style="--p:'+p.pct+';width:88px;height:88px;margin:0 auto"><div class="ring-in" style="width:70px;height:70px;font-size:22px">'+p.pct+'<small>%</small></div></div><div style="font-size:12px;color:var(--text3);margin-top:8px">Day '+p.done+(g.days>0?" of "+g.days:"")+' &middot; started '+es(g.start||"")+'</div></div>';
-  if(g.subs&&g.subs.length){h+='<div class="card-t">Daily Sub-Goals</div>';for(var i=0;i<g.subs.length;i++){var s=g.subs[i];h+='<div class="sub-item"><div class="si-ic">'+s.icon+'</div><div><div class="si-n">'+es(s.name)+'</div><div class="si-d">'+es(s.desc)+'</div></div></div>';}}
-  var didToday=(g.log||[]).indexOf(td())!==-1;
-  h+='<button class="btn '+(didToday?"btn-ghost":"btn-primary")+' btn-full" id="agMark" style="margin-top:12px" '+(didToday?"disabled":"")+'>'+(didToday?"&#10003; Marked today":"Mark Today Done")+'</button>';
-  h+='<button class="btn btn-ghost btn-full" id="agDrop" style="margin-top:8px;color:var(--danger)">Drop this goal</button></div>';
-  md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
+  ov.appendChild(md);document.body.appendChild(ov);
   function close(){if(ov.parentNode)document.body.removeChild(ov);}
-  document.getElementById("agX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
-  document.getElementById("agMark").onclick=function(){close();markGoalToday(g.id);};
-  document.getElementById("agDrop").onclick=function(){confirmDlg({title:"Drop this goal?",msg:"“"+g.name+"” and its logged days will be removed.",yes:"Drop goal",danger:true},function(){UD.goals=(UD.goals||[]).filter(function(x){return x.id!==g.id;});saveGoals(function(){ts("Goal dropped");close();renderPage();});});};
+  ov.onclick=function(e){if(e.target===ov)close();};
+  function render(){
+    var p=goalProgress(g),ds=td(),started=goalStarted(g),subDone=goalSubDone(g,ds),auto=g.rule!=="self";
+    var h='<div class="detail-3d"><div class="modal-title"><span>'+g.icon+' '+es(g.name)+'</span><button class="modal-close" id="agX">&#10005;</button></div>';
+    h+='<div style="text-align:center;margin-bottom:14px"><div class="ring" style="--p:'+p.pct+';width:88px;height:88px;margin:0 auto"><div class="ring-in" style="width:70px;height:70px;font-size:22px">'+p.pct+'<small>%</small></div></div><div style="font-size:12px;color:var(--text3);margin-top:8px">Day '+p.done+(g.days>0?" of "+g.days:"")+' &middot; started '+es(g.start||"")+'</div></div>';
+    if(!started)h+='<div class="locked-msg">&#128338; Starts on '+mk(g.start).toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"})+'</div>';
+    if(g.subs&&g.subs.length){
+      h+='<div class="card-t">Daily Sub-Goals'+(started?' <span style="font-weight:400;color:var(--text3);font-size:11px">— tap to tick</span>':'')+'</div>';
+      for(var i=0;i<g.subs.length;i++){var s=g.subs[i],on=subDone.indexOf(i)!==-1;
+        h+='<div class="sub-item'+(on?" done":"")+'"'+(started?' data-si="'+i+'" style="cursor:pointer"':'')+'>';
+        h+='<div class="ck'+(on?" on":"")+'" style="flex-shrink:0">'+(on?"&#10003;":"")+'</div>';
+        h+='<div class="si-ic">'+s.icon+'</div><div><div class="si-n">'+es(s.name)+'</div><div class="si-d">'+es(s.desc)+'</div></div></div>';}
+      if(auto)h+='<div style="font-size:11px;color:var(--text3);margin:8px 0 2px;text-align:center">Tick every sub-goal and the day completes automatically.</div>';
+    }
+    var didToday=(g.log||[]).indexOf(ds)!==-1;
+    if(auto){
+      h+='<div class="btn '+(didToday?"btn-primary":"btn-ghost")+' btn-full" style="margin-top:12px;pointer-events:none">'+(didToday?"&#10003; Today complete":(started?"Tick all sub-goals to complete":"Not started yet"))+'</div>';
+    }else{
+      h+='<button class="btn '+(didToday?"btn-ghost":"btn-primary")+' btn-full" id="agMark" style="margin-top:12px" '+((didToday||!started)?"disabled":"")+'>'+(didToday?"&#10003; Marked today":(started?"Mark Today Done":"Not started yet"))+'</button>';
+    }
+    h+='<button class="btn btn-ghost btn-full" id="agDrop" style="margin-top:8px;color:var(--danger)">Drop this goal</button></div>';
+    md.innerHTML=h;
+    document.getElementById("agX").onclick=close;
+    var mk2=document.getElementById("agMark");if(mk2)mk2.onclick=function(){markGoalToday(g.id);render();};
+    md.querySelectorAll("[data-si]").forEach(function(el){el.onclick=function(){var si=parseInt(this.dataset.si),on=subDone.indexOf(si)===-1;toggleGoalSub(g.id,si,on,render);render();};});
+    document.getElementById("agDrop").onclick=function(){confirmDlg({title:"Drop this goal?",msg:"“"+g.name+"” and its logged days will be removed.",yes:"Drop goal",danger:true},function(){UD.goals=(UD.goals||[]).filter(function(x){return x.id!==g.id;});saveGoals(function(){ts("Goal dropped");close();renderPage();});});};
+  }
+  render();
 }
 function openGoalDetail(preset){
   var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal flip-scene";
@@ -1531,20 +1543,23 @@ function openGoalDetail(preset){
   h+='<div class="card-t" style="margin-top:16px">Timeline</div>';
   h+='<label style="margin-top:0">Start date</label><input id="gdStart" type="date" value="'+startDs+'">';
   if(!custom){
-    h+='<label>Length — extend in full rounds, you can\'t shorten it</label>';
+    h+='<div id="gdLenBlock"><label>Length — extend in full rounds, you can\'t shorten it</label>';
     h+='<div style="display:flex;align-items:center;gap:12px;margin-top:4px">';
     h+='<button type="button" class="btn btn-ghost btn-sm" id="rMinus" style="min-width:40px;font-size:18px">&#8722;</button>';
     h+='<div style="text-align:center;min-width:64px"><div id="rDisp" style="font-family:var(--display);font-size:22px;color:var(--accent);line-height:1">&#215;1</div><div id="rDays" style="font-size:11px;color:var(--text3);font-weight:700">'+days+' days</div></div>';
     h+='<button type="button" class="btn btn-primary btn-sm" id="rPlus" style="min-width:40px;font-size:18px">+</button>';
-    h+='<div style="font-size:11px;color:var(--text3);flex:1">1 round = '+days+' days</div></div>';
+    h+='<div style="font-size:11px;color:var(--text3);flex:1">1 round = '+days+' days</div></div></div>';
   }
-  h+='<div style="font-size:12px;color:var(--text2);margin-top:14px;padding:11px 13px;background:var(--card2);border:1px solid var(--border);border-radius:10px">&#127937; Ends on <b id="gdEnd">'+addDaysStr(startDs,days)+'</b> &middot; <span id="gdTot">'+days+'</span> days total</div>';
+  h+='<div id="gdEndBox" style="font-size:12px;color:var(--text2);margin-top:14px;padding:11px 13px;background:var(--card2);border:1px solid var(--border);border-radius:10px">&#127937; Ends on <b id="gdEnd">'+addDaysStr(startDs,days)+'</b> &middot; <span id="gdTot">'+days+'</span> days total</div>';
+  h+='<div id="gdOpenBox" style="display:none;font-size:12px;color:var(--text2);margin-top:14px;padding:11px 13px;background:var(--card2);border:1px solid var(--border);border-radius:10px">&#9873; Open-ended &middot; you decide when each day counts and when to finish</div>';
   h+='<button class="btn btn-primary btn-full" id="gdStartBtn" style="margin-top:16px;font-size:15px">&#128293; Start '+es(custom?"Goal":preset.name)+'</button>';
   h+='</div>';
   md.innerHTML=h;ov.appendChild(md);document.body.appendChild(ov);
   function close(){if(ov.parentNode)document.body.removeChild(ov);}
   document.getElementById("gdX").onclick=close;ov.onclick=function(e){if(e.target===ov)close();};
-  md.querySelectorAll(".rule-opt").forEach(function(o){o.onclick=function(){rule=this.dataset.r;md.querySelectorAll(".rule-opt").forEach(function(x){x.classList.remove("on");});this.classList.add("on");};});
+  // Self-mark goals are open-ended: hide the (fixed) length + end-date UI when "I'll mark it myself" is chosen
+  function applyRuleUI(){var self=rule==="self",len=document.getElementById("gdLenBlock"),endB=document.getElementById("gdEndBox"),openB=document.getElementById("gdOpenBox");if(len)len.style.display=self?"none":"";if(endB)endB.style.display=self?"none":"";if(openB)openB.style.display=self?"":"none";}
+  md.querySelectorAll(".rule-opt").forEach(function(o){o.onclick=function(){rule=this.dataset.r;md.querySelectorAll(".rule-opt").forEach(function(x){x.classList.remove("on");});this.classList.add("on");applyRuleUI();};});
   var startI=document.getElementById("gdStart"),rounds=1;
   function totalDays(){return custom?(parseInt((document.getElementById("cDays")||{}).value)||30):days*rounds;}
   function refreshEnd(){var t=totalDays(),end=document.getElementById("gdEnd"),tot=document.getElementById("gdTot");if(end)end.textContent=addDaysStr(startI.value||td(),t);if(tot)tot.textContent=t;}
@@ -1561,8 +1576,10 @@ function openGoalDetail(preset){
     var name=preset.name,desc=preset.desc,subs=preset.subs,base=days,dcount;
     if(custom){name=(document.getElementById("cName").value||"").trim();if(!name){ts("Enter a goal name");return;}desc=(document.getElementById("cDesc").value||"").trim();dcount=parseInt(document.getElementById("cDays").value)||30;if(dcount<1){ts("Duration must be at least 1 day");return;}base=dcount;subs=customSubs.slice();}
     else{dcount=days*rounds;}
-    var st=startI.value||td(),tg=addDaysStr(st,dcount);
-    var goal={id:"g_"+Date.now(),presetId:custom?"":preset.id,icon:preset.icon,name:name,desc:desc,dur:dcount+" days",days:dcount,baseDays:base,rounds:custom?1:rounds,subs:subs,rule:rule,start:st,target:tg,log:[],createdAt:Date.now()};
+    var openEnded=(rule==="self");// self-mark goals have no fixed end date
+    if(openEnded)dcount=0;
+    var st=startI.value||td(),tg=openEnded?"":addDaysStr(st,dcount);
+    var goal={id:"g_"+Date.now(),presetId:custom?"":preset.id,icon:preset.icon,name:name,desc:desc,dur:openEnded?"Open-ended":(dcount+" days"),days:dcount,baseDays:base,rounds:custom?1:rounds,subs:subs,rule:rule,start:st,target:tg,log:[],subLog:{},createdAt:Date.now()};
     UD.goals=UD.goals||[];UD.goals.push(goal);
     saveGoals(function(){ts("&#127919; "+name+" started!");close();currentPage="goals";renderPage();});
   };
