@@ -1098,18 +1098,21 @@ function dlX(y,m){
 // TASKS
 function rTasks(el){
   var active=(UD.tasks||[]).filter(function(t){return!t.archived;}),arc=UD.archivedTasks||[];
+  // Existing headings (challenge groups) so the user can reuse one or type a new one
+  var groups=[];for(var gi=0;gi<active.length;gi++){var gg=(active[gi].group||"").trim();if(gg&&groups.indexOf(gg)===-1)groups.push(gg);}
+  var groupOpts=groups.map(function(g){return '<option value="'+es(g)+'">';}).join("");
   var h='<div class="card"><div class="card-t">Import from Excel</div><div class="import-zone" id="tmIZ"><div style="font-size:24px">&#128196;</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Tap to upload .xlsx</div><input type="file" accept=".xlsx,.xls,.csv" style="display:none" id="tmFI"></div></div>';
-  h+='<div class="card"><div class="card-t">Add New Task</div><label style="margin-top:0">Task Name</label><input id="tmN" placeholder="e.g. GYM, English Practice..."><label>Description</label><input id="tmD" placeholder="Optional"><label>Time</label><input id="tmT" placeholder="e.g. 19:30 – 20:30"><label>Which days?</label><div class="day-pills" id="tmDP"></div><label>Track a number?</label><input id="tmNL" placeholder="Optional"><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="tmA">+ Add Task</button></div></div>';
+  h+='<div class="card"><div class="card-t">Add New Task</div><label style="margin-top:0">Heading / Challenge</label><input id="tmG" list="tmGroups" placeholder="e.g. Morning Routine, Fitness, Study"><datalist id="tmGroups">'+groupOpts+'</datalist><div style="font-size:10px;color:var(--text3);margin-top:4px">Reuse a heading to group tasks together, or type a new one for its own challenge.</div><label>Task Name</label><input id="tmN" placeholder="e.g. GYM, English Practice..."><label>Description</label><input id="tmD" placeholder="Optional"><label>Time</label><input id="tmT" placeholder="e.g. 19:30 – 20:30"><label>Which days?</label><div class="day-pills" id="tmDP"></div><label>Track a number?</label><input id="tmNL" placeholder="Optional"><div style="margin-top:14px"><button class="btn btn-primary btn-sm btn-full" id="tmA">+ Add Task</button></div></div>';
   h+='<div class="card"><div class="card-t">Active Tasks ('+active.length+')</div>';
   if(!active.length)h+='<div class="empty">No active tasks</div>';
-  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
+  for(var i=0;i<active.length;i++){var t=active[i];h+='<div class="task-item"><div class="t-info"><div class="t-name">'+es(t.name)+' <span class="freq-tag">'+es(t.group||"Daily Routine")+'</span></div><div class="t-days">'+getDL(t.days)+(t.time?' &middot; '+es(t.time):'')+'</div>'+(t.desc?'<div class="t-meta">'+es(t.desc)+'</div>':'')+'</div><div class="task-actions"><button class="tm-e" data-t="'+t.id+'" title="Edit">&#9998;</button><button class="tm-a" data-t="'+t.id+'" title="Archive">&#128451;</button><button class="tm-d" data-t="'+t.id+'" title="Delete">&#128465;</button></div></div>';}
   if(active.length)h+='<button class="btn btn-ghost btn-sm btn-full" id="tmClear" style="margin-top:12px;color:var(--danger)">&#128465; Clear all tasks</button>';
   h+='</div>';
   if(arc.length){h+='<div class="card"><div class="card-t">Archived ('+arc.length+')</div>';for(var i=0;i<arc.length;i++){var t=arc[i];h+='<div class="task-item archived"><div class="t-info"><div class="t-name">'+es(t.name)+'</div><div class="t-days">'+getDL(t.days)+'</div></div><div class="task-actions"><button class="tm-r" data-t="'+t.id+'" title="Restore">&#128260;</button></div></div>';}h+='</div>';}
   el.innerHTML=h;
   var iz=document.getElementById("tmIZ"),fi=document.getElementById("tmFI");if(iz)iz.onclick=function(){fi.click();};if(fi)fi.onchange=function(){if(fi.files.length)handleImport(fi.files[0],false);};
   var sD=[],dp=document.getElementById("tmDP");if(dp)buildDayPills(dp,sD);
-  var ab=document.getElementById("tmA");if(ab)ab.onclick=function(){var n=(document.getElementById("tmN").value||"").trim();if(!n){ts("Enter name");return;}if(!sD.length){ts("Select days");return;}var d=(document.getElementById("tmD").value||"").trim(),nl=(document.getElementById("tmNL").value||"").trim(),tm=(document.getElementById("tmT").value||"").trim();UD.tasks.push({id:"t_"+Date.now(),name:n,desc:d,time:tm,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});saveUD(function(){ts("Task added!");rTasks(el);});};
+  var ab=document.getElementById("tmA");if(ab)ab.onclick=function(){var n=(document.getElementById("tmN").value||"").trim();if(!n){ts("Enter name");return;}var gp=(document.getElementById("tmG").value||"").trim()||"Daily Routine";if(!sD.length){ts("Select days");return;}var d=(document.getElementById("tmD").value||"").trim(),nl=(document.getElementById("tmNL").value||"").trim(),tm=(document.getElementById("tmT").value||"").trim();UD.tasks.push({id:"t_"+Date.now(),name:n,group:gp,desc:d,time:tm,days:sD.slice().sort(),numId:nl?("n_"+Date.now()):"",numLabel:nl,startDate:td()});saveUD(function(){ts("Task added!");rTasks(el);});};
   el.querySelectorAll(".tm-e").forEach(function(b){b.onclick=function(e){e.stopPropagation();showEdit(this.dataset.t,el);};});
   el.querySelectorAll(".tm-a").forEach(function(b){b.onclick=function(e){e.stopPropagation();var tid=this.dataset.t;confirmDlg({title:"Archive task?",msg:"Removed from your daily list but kept in reports.",yes:"Archive",icon:"&#128451;&#65039;"},function(){var idx=-1;for(var i=0;i<UD.tasks.length;i++)if(UD.tasks[i].id===tid){idx=i;break;}if(idx===-1)return;var t=UD.tasks.splice(idx,1)[0];t.archivedDate=td();UD.archivedTasks.push(t);saveUD(function(){ts("Archived");rTasks(el);});});};});
   el.querySelectorAll(".tm-d").forEach(function(b){b.onclick=function(e){e.stopPropagation();var tid=this.dataset.t;confirmDlg({title:"Delete task?",msg:"This deletes it permanently — history will be lost.",yes:"Delete",danger:true},function(){UD.tasks=UD.tasks.filter(function(t){return t.id!==tid;});saveUD(function(){ts("Deleted");rTasks(el);});});};});
@@ -1120,8 +1123,10 @@ function rTasks(el){
 function showEdit(tid,pEl){
   var task;for(var i=0;i<UD.tasks.length;i++)if(UD.tasks[i].id===tid){task=UD.tasks[i];break;}if(!task)return;
   var ov=document.createElement("div");ov.className="modal-overlay";var md=document.createElement("div");md.className="modal";
+  var eGroups=[];for(var gi=0;gi<UD.tasks.length;gi++){var gg=(UD.tasks[gi].group||"").trim();if(gg&&eGroups.indexOf(gg)===-1)eGroups.push(gg);}
   var h='<div class="modal-title"><span>Edit Task</span><button class="modal-close" id="emC">&#10005;</button></div>';
-  h+='<label style="margin-top:0">Task Name</label><input id="emN" value="'+es(task.name)+'">';
+  h+='<label style="margin-top:0">Heading / Challenge</label><input id="emG" list="emGroups" value="'+es(task.group||"Daily Routine")+'"><datalist id="emGroups">'+eGroups.map(function(g){return '<option value="'+es(g)+'">';}).join("")+'</datalist>';
+  h+='<label>Task Name</label><input id="emN" value="'+es(task.name)+'">';
   h+='<label>Description</label><input id="emD" value="'+(task.desc?es(task.desc):"")+'">';
   h+='<label>Time</label><input id="emT" value="'+(task.time?es(task.time):"")+'" placeholder="e.g. 19:30 – 20:30">';
   h+='<label>Which days?</label><div class="day-pills" id="emDP"></div>';
@@ -1132,7 +1137,7 @@ function showEdit(tid,pEl){
   buildDayPills(dp,eD,eD.slice());
   document.getElementById("emC").onclick=function(){document.body.removeChild(ov);};
   ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
-  document.getElementById("emS").onclick=function(){var n=(document.getElementById("emN").value||"").trim();if(!n){ts("Enter name");return;}if(!eD.length){ts("Select days");return;}task.name=n;task.desc=(document.getElementById("emD").value||"").trim();task.time=(document.getElementById("emT").value||"").trim();task.days=eD.sort();if(task.numId){var nl=document.getElementById("emNL");if(nl)task.numLabel=nl.value.trim();}document.body.removeChild(ov);saveUD(function(){ts("Updated");rTasks(pEl);});};
+  document.getElementById("emS").onclick=function(){var n=(document.getElementById("emN").value||"").trim();if(!n){ts("Enter name");return;}if(!eD.length){ts("Select days");return;}task.name=n;task.group=(document.getElementById("emG").value||"").trim()||"Daily Routine";task.desc=(document.getElementById("emD").value||"").trim();task.time=(document.getElementById("emT").value||"").trim();task.days=eD.sort();if(task.numId){var nl=document.getElementById("emNL");if(nl)task.numLabel=nl.value.trim();}document.body.removeChild(ov);saveUD(function(){ts("Updated");rTasks(pEl);});};
 }
 
 // ===== SHOW UP =====
@@ -1479,23 +1484,30 @@ function renderDailyRoutine(){
 }
 function drawDailyRoutine(card){
   var ds=td(),tasks=getTasksForDate(ds),dl=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"});
-  var done=0;for(var i=0;i<tasks.length;i++)if(PD[tasks[i].id])done++;
-  var total=tasks.length,pct=total?Math.round(done/total*100):0,allDone=total>0&&done===total;
-  var h='<div class="card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
-  h+='<div class="ring" style="--p:'+pct+';width:52px;height:52px;flex-shrink:0"><div class="ring-in" style="width:40px;height:40px;font-size:13px">'+pct+'<small>%</small></div></div>';
-  h+='<div style="flex:1;min-width:0"><div style="font-family:var(--display);font-size:19px;letter-spacing:.5px">&#9989; Daily Routine</div><div style="font-size:11px;color:var(--text3)">'+dl+' &middot; '+done+' of '+total+' done</div></div></div>';
-  if(!total){
-    h+='<div class="empty" style="padding:14px">No tasks scheduled for today.<br><span style="font-size:11px">Add your daily tasks in <b>Manage Tasks</b> and they\'ll show up here.</span></div>';
-  }else{
-    if(allDone)h+='<div class="locked-msg" style="background:var(--accent-bg);border-color:var(--accent);color:var(--accent)">&#128293; All done — you showed up today!</div>';
-    for(var i=0;i<tasks.length;i++){var t=tasks[i],on=!!PD[t.id];
+  if(!tasks.length){
+    card.innerHTML='<div class="card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div class="ring" style="--p:0;width:52px;height:52px;flex-shrink:0"><div class="ring-in" style="width:40px;height:40px;font-size:13px">0<small>%</small></div></div><div style="flex:1;min-width:0"><div style="font-family:var(--display);font-size:19px;letter-spacing:.5px">&#9989; Daily Routine</div><div style="font-size:11px;color:var(--text3)">'+dl+'</div></div></div><div class="empty" style="padding:14px">No tasks scheduled for today.<br><span style="font-size:11px">Add tasks under a heading in <b>Manage Tasks</b> and each heading shows up here as its own challenge.</span></div></div>';
+    return;
+  }
+  // Group today's tasks by their heading (preserving first-seen order); each heading renders as its own challenge card
+  var order=[],byGroup={};
+  for(var i=0;i<tasks.length;i++){var g=(tasks[i].group||"Daily Routine").trim()||"Daily Routine";if(!byGroup[g]){byGroup[g]=[];order.push(g);}byGroup[g].push(tasks[i]);}
+  var h='';
+  for(var gi=0;gi<order.length;gi++){
+    var gname=order[gi],gt=byGroup[gname],gdone=0;
+    for(var j=0;j<gt.length;j++)if(PD[gt[j].id])gdone++;
+    var gtotal=gt.length,gpct=gtotal?Math.round(gdone/gtotal*100):0,gall=gtotal>0&&gdone===gtotal;
+    h+='<div class="card" style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+    h+='<div class="ring" style="--p:'+gpct+';width:52px;height:52px;flex-shrink:0"><div class="ring-in" style="width:40px;height:40px;font-size:13px">'+gpct+'<small>%</small></div></div>';
+    h+='<div style="flex:1;min-width:0"><div style="font-family:var(--display);font-size:19px;letter-spacing:.5px">&#11088; '+es(gname)+'</div><div style="font-size:11px;color:var(--text3)">'+dl+' &middot; '+gdone+' of '+gtotal+' done</div></div></div>';
+    if(gall)h+='<div class="locked-msg" style="background:var(--accent-bg);border-color:var(--accent);color:var(--accent)">&#10003; '+es(gname)+' complete for today!</div>';
+    for(var j=0;j<gt.length;j++){var t=gt[j],on=!!PD[t.id];
       h+='<div class="rw'+(on?" done":"")+'" data-tid="'+t.id+'" style="cursor:pointer"><div class="ck'+(on?" on":"")+'">'+(on?"&#10003;":"")+'</div><div style="flex:1;min-width:0"><div class="tn">'+es(t.name)+'</div>';
       if(t.time)h+='<div class="td2" style="color:var(--accent);font-family:Consolas,monospace;font-size:10px">&#128337; '+es(t.time)+'</div>';
       if(t.desc)h+='<div class="td2">'+es(t.desc)+'</div>';
       h+='</div></div>';}
-    h+='<div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">Tick every task to complete the day and keep your streak.</div>';
+    h+='</div>';
   }
-  h+='</div>';
+  h+='<div style="font-size:11px;color:var(--text3);margin:-4px 0 8px;text-align:center">Tick every task in all headings to complete the day and keep your streak.</div>';
   card.innerHTML=h;
   card.querySelectorAll("[data-tid]").forEach(function(r){r.onclick=function(){
     var tid=this.dataset.tid;PD[tid]=!PD[tid];
